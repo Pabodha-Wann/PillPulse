@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  postgres-pharmacy:
+    image: postgres:15-alpine
+    container_name: pillpulse-pharmacy-db
+    environment:
+      POSTGRES_DB: pharmacy_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 20031217
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_pharmacy_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_pharmacy_data:
