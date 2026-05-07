@@ -23,7 +23,8 @@ spring:
 
   flyway:
     enabled: true
-    locations: classpath:/db/migration
+    locations: classpath:db/migration/
+    baseline-on-migrate: false
 
 # eureka configurations
 eureka:
