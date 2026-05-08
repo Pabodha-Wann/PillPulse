@@ -37,19 +37,19 @@ public class Pharmacy {
     private String password;
 
     @Column(name = "created_at")
-    private String createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name="updated_at")
-    private String updatedAt;
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate(){
-        createdAt = LocalDateTime.now().toString();
-        updatedAt = LocalDateTime.now().toString();
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate(){
-        updatedAt = LocalDateTime.now().toString();
+        updatedAt = LocalDateTime.now();
     }
 }
