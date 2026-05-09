@@ -1,5 +1,6 @@
 package com.pillpulse.pharmacy_service.controller;
 
+import com.pillpulse.pharmacy_service.dto.request.PharmacyLoginRequest;
 import com.pillpulse.pharmacy_service.dto.request.PharmacyRegisterRequest;
 import com.pillpulse.pharmacy_service.dto.response.PharmacyResponse;
 import com.pillpulse.pharmacy_service.service.PharmacyService;
@@ -32,6 +33,14 @@ public class PharmacyController {
     @GetMapping
     public ResponseEntity<List<PharmacyResponse>> getAllPharmacies(){
         return ResponseEntity.ok(pharmacyService.getAllPharmacies());
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(
+            @RequestBody PharmacyLoginRequest request
+    ){
+        String token = pharmacyService.login(request);
+        return ResponseEntity.ok(token);
     }
 
 }

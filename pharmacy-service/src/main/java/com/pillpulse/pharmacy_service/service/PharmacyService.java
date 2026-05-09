@@ -1,5 +1,7 @@
 package com.pillpulse.pharmacy_service.service;
 
+import com.pillpulse.pharmacy_service.config.JwtService;
+import com.pillpulse.pharmacy_service.dto.request.PharmacyLoginRequest;
 import com.pillpulse.pharmacy_service.dto.request.PharmacyRegisterRequest;
 import com.pillpulse.pharmacy_service.dto.response.PharmacyResponse;
 import com.pillpulse.pharmacy_service.entity.Pharmacy;
@@ -18,6 +20,7 @@ public class PharmacyService {
     private final PharmacyRepository pharmacyRepository;
     private final PharmacyMapper pharmacyMapper;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public PharmacyResponse register(PharmacyRegisterRequest request){
         if(pharmacyRepository.existsByEmail(request.getEmail())){
@@ -45,6 +48,19 @@ public class PharmacyService {
                 .stream()
                 .map(pharmacyMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    public String login(PharmacyLoginRequest request){
+        Pharmacy pharmacy = pharmacyRepository.findByEmail(request.getEmail())
+                .orElseThrow(()-> new RuntimeException("Pharmacy not found"));
+
+        //check password
+        if(!passwordEncoder.matches(request.getPassword(),pharmacy.getPassword())){
+            throw new RuntimeException("Invalid Password");
+        }
+
+        //generate and return Jwt token
+        return jwtService.generateToken(pharmacy.getEmail());
     }
 
 
