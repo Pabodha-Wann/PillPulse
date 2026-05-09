@@ -5,6 +5,8 @@ import com.pillpulse.pharmacy_service.dto.request.PharmacyLoginRequest;
 import com.pillpulse.pharmacy_service.dto.request.PharmacyRegisterRequest;
 import com.pillpulse.pharmacy_service.dto.response.PharmacyResponse;
 import com.pillpulse.pharmacy_service.entity.Pharmacy;
+import com.pillpulse.pharmacy_service.exception.DuplicateResourceException;
+import com.pillpulse.pharmacy_service.exception.ResourceNotFoundException;
 import com.pillpulse.pharmacy_service.mapper.PharmacyMapper;
 import com.pillpulse.pharmacy_service.repository.PharmacyRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,7 @@ public class PharmacyService {
 
     public PharmacyResponse register(PharmacyRegisterRequest request){
         if(pharmacyRepository.existsByEmail(request.getEmail())){
-            throw new RuntimeException("Email already registered:"+ request.getEmail());
+            throw new DuplicateResourceException("Email already registered:"+ request.getEmail());
         }
 
         Pharmacy pharmacy = pharmacyMapper.toEntity(request);
@@ -38,7 +40,7 @@ public class PharmacyService {
 
     public PharmacyResponse getById(Long id){
         Pharmacy pharmacy = pharmacyRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Pharmacy Not Found"));
+                .orElseThrow(()-> new ResourceNotFoundException("Pharmacy Not Found"));
 
         return pharmacyMapper.toResponse(pharmacy);
     }
