@@ -1,23 +1,33 @@
 package com.pillpulse.medicine_service.service;
 
 import com.pillpulse.medicine_service.dto.request.MedicineRequest;
+import com.pillpulse.medicine_service.dto.request.PharmacyMedicineRequest;
 import com.pillpulse.medicine_service.dto.response.MedicineResponse;
+import com.pillpulse.medicine_service.dto.response.PharmacyMedicineResponse;
 import com.pillpulse.medicine_service.entity.Medicine;
+import com.pillpulse.medicine_service.entity.PharmacyMedicine;
 import com.pillpulse.medicine_service.mapper.MedicineMapper;
+import com.pillpulse.medicine_service.mapper.PharmacyMedicineMapper;
 import com.pillpulse.medicine_service.repository.MedicineRepository;
+import com.pillpulse.medicine_service.repository.PharmacyMedicineRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MedicineService {
 
     private final MedicineRepository medicineRepository;
-    private final MedicineMapper  medicineMapper;
-
+    private final MedicineMapper medicineMapper;
+    private final PharmacyMedicineMapper pharmacyMedicineMapper;
+    private final WebClient.Builder webClientBuilder;
+    private final PharmacyMedicineRepository pharmacyMedicineRepository;
 
 
     public MedicineResponse createMedicine(MedicineRequest medicineRequest){
@@ -75,5 +85,75 @@ public class MedicineService {
         }
 
         medicineRepository.deleteById(id);
+    }
+
+    //----Pharmacy Medicine(stock management)----
+
+    public PharmacyMedicineResponse addMedicineToPharmacy(
+            PharmacyMedicineRequest pharmacyMedicineRequest
+    ){
+        //check pharmacy exists using webclient
+        log.info("Checking pharmacy exists: {}",pharmacyMedicineRequest.getPharmacyId());
+
+        try{
+            webClientBuilder.build()
+                    .get()
+                    .uri("http://pharmacy-service/api/pharmacies/{id}",pharmacyMedicineRequest.getPharmacyId())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+        }catch (Exception e){
+            throw new RuntimeException(
+                    "Pharmacy ot found with id: " + pharmacyMedicineRequest.getPharmacyId()
+            );
+        }
+
+        Medicine medicine = medicineRepository.findById(pharmacyMedicineRequest.getMedicineId())
+                .orElseThrow(()-> new RuntimeException(
+                        "Medicine not found with id: " + pharmacyMedicineRequest.getMedicineId()
+                ));
+
+        if(pharmacyMedicineRepository.existsAllByPharmacyIdAndMedicineId(
+                pharmacyMedicineRequest.getPharmacyId(),
+                pharmacyMedicineRequest.getMedicineId()
+        )){
+            throw new RuntimeException(
+                "Medicine already exists in this pharmacy"
+            );
+        }
+
+
+        //save
+        PharmacyMedicine pharmacyMedicine = PharmacyMedicine.builder()
+                .pharmacyId(pharmacyMedicineRequest.getPharmacyId())
+                .medicine(medicine)
+                .quantityInStock(pharmacyMedicineRequest.getQuantityInStock())
+                .price(pharmacyMedicineRequest.getPrice())
+                .build();
+
+        PharmacyMedicine saved = pharmacyMedicineRepository.save(pharmacyMedicine);
+        return pharmacyMedicineMapper.toResponse(saved);
+    }
+
+    public List<PharmacyMedicineResponse> getMedicinesByPharmacy(Long pharmacyId){
+
+        try{
+            webClientBuilder.build()
+                    .get()
+                    .uri("http://pharmacy-service/api/pharmacies/{id}",pharmacyId)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+        }catch (Exception e){
+            throw new RuntimeException(
+                    "Pharmacy ot found with id: " + pharmacyId
+            );
+        }
+
+        return pharmacyMedicineRepository.findByPharmacyId(pharmacyId)
+                .stream()
+                .map(pharmacyMedicineMapper::toResponse)
+                .collect(Collectors.toList());
+
     }
 }

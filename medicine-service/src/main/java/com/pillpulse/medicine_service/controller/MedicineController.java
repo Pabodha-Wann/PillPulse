@@ -1,7 +1,9 @@
 package com.pillpulse.medicine_service.controller;
 
 import com.pillpulse.medicine_service.dto.request.MedicineRequest;
+import com.pillpulse.medicine_service.dto.request.PharmacyMedicineRequest;
 import com.pillpulse.medicine_service.dto.response.MedicineResponse;
+import com.pillpulse.medicine_service.dto.response.PharmacyMedicineResponse;
 import com.pillpulse.medicine_service.service.MedicineService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -50,5 +52,21 @@ public class MedicineController {
     public ResponseEntity<Void> deleteMedicine(@PathVariable Long id){
         medicineService.deleteMedicine(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/addToPharmacy")
+    public ResponseEntity<PharmacyMedicineResponse> addMedicineToPharmacy(
+            @RequestBody PharmacyMedicineRequest request
+            ){
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(medicineService.addMedicineToPharmacy(request));
+    }
+
+    @GetMapping("/pharmacy/{pharmacyId}")
+    public ResponseEntity<List<PharmacyMedicineResponse>> getMedicinesByPharmacy(
+            @PathVariable Long pharmacyId
+    ){
+        return ResponseEntity.ok(medicineService.getMedicinesByPharmacy(pharmacyId));
     }
 }
