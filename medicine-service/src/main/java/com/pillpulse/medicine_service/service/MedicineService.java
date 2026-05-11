@@ -1,5 +1,6 @@
 package com.pillpulse.medicine_service.service;
 
+import com.pillpulse.medicine_service.client.PharmacyServiceClient;
 import com.pillpulse.medicine_service.dto.request.MedicineRequest;
 import com.pillpulse.medicine_service.dto.request.PharmacyMedicineRequest;
 import com.pillpulse.medicine_service.dto.request.PharmacyMedicineUpdateRequest;
@@ -14,7 +15,6 @@ import com.pillpulse.medicine_service.repository.PharmacyMedicineRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,9 +27,10 @@ public class MedicineService {
     private final MedicineRepository medicineRepository;
     private final MedicineMapper medicineMapper;
     private final PharmacyMedicineMapper pharmacyMedicineMapper;
-    private final WebClient.Builder webClientBuilder;
     private final PharmacyMedicineRepository pharmacyMedicineRepository;
 
+    //for webclient
+    private final PharmacyServiceClient pharmacyServiceClient;
 
     public MedicineResponse createMedicine(MedicineRequest medicineRequest){
         if(medicineRepository.existsByName(medicineRequest.getName())){
@@ -94,20 +95,7 @@ public class MedicineService {
             PharmacyMedicineRequest pharmacyMedicineRequest
     ){
         //check pharmacy exists using webclient
-        log.info("Checking pharmacy exists: {}",pharmacyMedicineRequest.getPharmacyId());
-
-        try{
-            webClientBuilder.build()
-                    .get()
-                    .uri("http://pharmacy-service/api/pharmacies/{id}",pharmacyMedicineRequest.getPharmacyId())
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-        }catch (Exception e){
-            throw new RuntimeException(
-                    "Pharmacy ot found with id: " + pharmacyMedicineRequest.getPharmacyId()
-            );
-        }
+       pharmacyServiceClient.verifyPharmacyExists(pharmacyMedicineRequest.getPharmacyId());
 
         Medicine medicine = medicineRepository.findById(pharmacyMedicineRequest.getMedicineId())
                 .orElseThrow(()-> new RuntimeException(
@@ -138,18 +126,7 @@ public class MedicineService {
 
     public List<PharmacyMedicineResponse> getMedicinesByPharmacy(Long pharmacyId){
 
-        try{
-            webClientBuilder.build()
-                    .get()
-                    .uri("http://pharmacy-service/api/pharmacies/{id}",pharmacyId)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-        }catch (Exception e){
-            throw new RuntimeException(
-                    "Pharmacy ot found with id: " + pharmacyId
-            );
-        }
+        pharmacyServiceClient.verifyPharmacyExists(pharmacyId);
 
         return pharmacyMedicineRepository.findByPharmacyId(pharmacyId)
                 .stream()
