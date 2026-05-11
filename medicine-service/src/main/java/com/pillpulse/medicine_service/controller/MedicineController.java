@@ -2,6 +2,7 @@ package com.pillpulse.medicine_service.controller;
 
 import com.pillpulse.medicine_service.dto.request.MedicineRequest;
 import com.pillpulse.medicine_service.dto.request.PharmacyMedicineRequest;
+import com.pillpulse.medicine_service.dto.request.PharmacyMedicineUpdateRequest;
 import com.pillpulse.medicine_service.dto.response.MedicineResponse;
 import com.pillpulse.medicine_service.dto.response.PharmacyMedicineResponse;
 import com.pillpulse.medicine_service.service.MedicineService;
@@ -68,5 +69,25 @@ public class MedicineController {
             @PathVariable Long pharmacyId
     ){
         return ResponseEntity.ok(medicineService.getMedicinesByPharmacy(pharmacyId));
+    }
+
+    @DeleteMapping("/pharmacy/{pharmacyId}/medicine/{medicineId}")
+    public ResponseEntity<Void> removeMedicineFromPharmacy(
+            @PathVariable Long pharmacyId,
+            @PathVariable Long medicineId
+    ){
+        medicineService.removeMedicineFromPharmacy(pharmacyId, medicineId);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    @PutMapping("/pharmacy/{pharmacyId}/medicine/{medicineId}")
+    public ResponseEntity<PharmacyMedicineResponse> updatePharmacyMedicine(
+            @PathVariable Long pharmacyId,
+            @PathVariable Long medicineId,
+            @RequestBody PharmacyMedicineUpdateRequest request) {
+        return ResponseEntity.ok(
+                medicineService.updatePharmacyMedicine(pharmacyId, medicineId, request)
+        );
     }
 }

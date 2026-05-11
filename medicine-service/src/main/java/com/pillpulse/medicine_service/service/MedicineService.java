@@ -2,6 +2,7 @@ package com.pillpulse.medicine_service.service;
 
 import com.pillpulse.medicine_service.dto.request.MedicineRequest;
 import com.pillpulse.medicine_service.dto.request.PharmacyMedicineRequest;
+import com.pillpulse.medicine_service.dto.request.PharmacyMedicineUpdateRequest;
 import com.pillpulse.medicine_service.dto.response.MedicineResponse;
 import com.pillpulse.medicine_service.dto.response.PharmacyMedicineResponse;
 import com.pillpulse.medicine_service.entity.Medicine;
@@ -156,4 +157,39 @@ public class MedicineService {
                 .collect(Collectors.toList());
 
     }
+
+
+
+    public void removeMedicineFromPharmacy(Long pharmacyId, Long medicineId){
+        PharmacyMedicine pharmacyMedicine = pharmacyMedicineRepository.findByPharmacyIdAndMedicineId(pharmacyId,medicineId)
+                .orElseThrow(
+                        ()-> new RuntimeException("Medicine not found in this pharmacy")
+                );
+
+        pharmacyMedicineRepository.delete(pharmacyMedicine);
+    }
+
+    public PharmacyMedicineResponse updatePharmacyMedicine(
+            Long pharmacyId,
+            Long medicineId,
+            PharmacyMedicineUpdateRequest request
+    ){
+        PharmacyMedicine existing = pharmacyMedicineRepository
+                .findByPharmacyIdAndMedicineId(pharmacyId,medicineId)
+                .orElseThrow(() -> new RuntimeException(
+                    "Medicine not found in this pharmacy"
+                ));
+
+        PharmacyMedicine updated = PharmacyMedicine.builder()
+                .id(existing.getId())
+                .pharmacyId(existing.getPharmacyId())
+                .medicine(existing.getMedicine())
+                .quantityInStock(request.getQuantityInStock())
+                .price(request.getPrice())
+                .build();
+
+        PharmacyMedicine saved = pharmacyMedicineRepository.save(updated);
+        return pharmacyMedicineMapper.toResponse(saved);
+    }
+
 }
