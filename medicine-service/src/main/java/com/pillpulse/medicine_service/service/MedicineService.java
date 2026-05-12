@@ -6,8 +6,10 @@ import com.pillpulse.medicine_service.dto.request.PharmacyMedicineRequest;
 import com.pillpulse.medicine_service.dto.request.PharmacyMedicineUpdateRequest;
 import com.pillpulse.medicine_service.dto.response.MedicineResponse;
 import com.pillpulse.medicine_service.dto.response.PharmacyMedicineResponse;
+import com.pillpulse.medicine_service.dto.response.PharmacyMedicineSearchResponse;
 import com.pillpulse.medicine_service.entity.Medicine;
 import com.pillpulse.medicine_service.entity.PharmacyMedicine;
+import com.pillpulse.medicine_service.entity.StockStatus;
 import com.pillpulse.medicine_service.mapper.MedicineMapper;
 import com.pillpulse.medicine_service.mapper.PharmacyMedicineMapper;
 import com.pillpulse.medicine_service.repository.MedicineRepository;
@@ -167,6 +169,25 @@ public class MedicineService {
 
         PharmacyMedicine saved = pharmacyMedicineRepository.save(updated);
         return pharmacyMedicineMapper.toResponse(saved);
+    }
+
+    //Get Pharmacies with a specific medicine
+    public List<PharmacyMedicineSearchResponse> searchPharmaciesWithMedicine(
+            String medicineName
+    ){
+        return pharmacyMedicineRepository.findByMedicine_NameIgnoreCaseAndStatus(
+                medicineName, StockStatus.IN_STOCK
+        )
+                .stream()
+                .map(pm-> PharmacyMedicineSearchResponse.builder()
+                        .pharmacyId(pm.getPharmacyId())
+                        .medicineId(pm.getMedicine().getId())
+                        .medicineName(pm.getMedicine().getName())
+                        .quantityInStock(pm.getQuantityInStock())
+                        .price(pm.getPrice())
+                        .status(pm.getStatus())
+                        .build())
+                .collect(Collectors.toList());
     }
 
 }

@@ -5,6 +5,7 @@ import com.pillpulse.medicine_service.dto.request.PharmacyMedicineRequest;
 import com.pillpulse.medicine_service.dto.request.PharmacyMedicineUpdateRequest;
 import com.pillpulse.medicine_service.dto.response.MedicineResponse;
 import com.pillpulse.medicine_service.dto.response.PharmacyMedicineResponse;
+import com.pillpulse.medicine_service.dto.response.PharmacyMedicineSearchResponse;
 import com.pillpulse.medicine_service.service.MedicineService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -88,6 +89,16 @@ public class MedicineController {
             @RequestBody PharmacyMedicineUpdateRequest request) {
         return ResponseEntity.ok(
                 medicineService.updatePharmacyMedicine(pharmacyId, medicineId, request)
+        );
+    }
+
+    //Get pharmacy by medicine name
+    @GetMapping("/search")
+    public ResponseEntity<List<PharmacyMedicineSearchResponse>> searchPharmaciesWithMedicine(
+            @RequestParam String name
+    ){
+        return ResponseEntity.ok(
+                medicineService.searchPharmaciesWithMedicine(name)
         );
     }
 }
