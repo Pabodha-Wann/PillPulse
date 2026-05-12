@@ -3,6 +3,7 @@ package com.pillpulse.search_service.service;
 import com.pillpulse.search_service.dto.external.PharmacyMedicineSearchResponse;
 import com.pillpulse.search_service.dto.external.PharmacyResponse;
 import com.pillpulse.search_service.dto.response.SearchResult;
+import com.pillpulse.search_service.exception.ResourceNotFoundException;
 import com.pillpulse.search_service.util.HaversineUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +41,9 @@ public class SearchService {
                         .block();
 
         if(pharmacyMedicines == null || pharmacyMedicines.isEmpty()){
-            log.info("Pharmacy Medicine not found");
-            return List.of();
+            throw new ResourceNotFoundException(
+                    "No pharmacies found with medicine: " + medicineName
+            );
         }
 
 
