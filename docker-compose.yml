@@ -37,7 +37,21 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  postgres-alert:
+    image: postgres:15-alpine
+    container_name: pillpulse
+    environment:
+      POSTGRES_DB: alert_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 20031217
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_alert_data:/var/lib/postgresql/data
+
+
 volumes:
   postgres_pharmacy_data:
   postgres_medicine_data:
+  postgres_alert_data:
   rabbitmq_data:
