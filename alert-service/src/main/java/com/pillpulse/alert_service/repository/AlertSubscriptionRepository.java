@@ -5,4 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AlertSubscriptionRepository extends JpaRepository<AlertSubscription,Long> {
 
+    //check is user subscribe to the medicine
+    boolean existsByUserEmailAndMedicineId(String UserEmail,Long MedicineId);
+
+
+
 }
