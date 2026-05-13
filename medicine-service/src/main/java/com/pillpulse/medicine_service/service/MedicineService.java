@@ -10,6 +10,8 @@ import com.pillpulse.medicine_service.dto.response.PharmacyMedicineSearchRespons
 import com.pillpulse.medicine_service.entity.Medicine;
 import com.pillpulse.medicine_service.entity.PharmacyMedicine;
 import com.pillpulse.medicine_service.entity.StockStatus;
+import com.pillpulse.medicine_service.event.StockEvent;
+import com.pillpulse.medicine_service.event.StockEventPublisher;
 import com.pillpulse.medicine_service.mapper.MedicineMapper;
 import com.pillpulse.medicine_service.mapper.PharmacyMedicineMapper;
 import com.pillpulse.medicine_service.repository.MedicineRepository;
@@ -33,6 +35,7 @@ public class MedicineService {
 
     //for webclient
     private final PharmacyServiceClient pharmacyServiceClient;
+    private final StockEventPublisher stockEventPublisher;
 
     public MedicineResponse createMedicine(MedicineRequest medicineRequest){
         if(medicineRepository.existsByName(medicineRequest.getName())){
@@ -159,6 +162,9 @@ public class MedicineService {
                     "Medicine not found in this pharmacy"
                 ));
 
+        int oldQuantity = existing.getQuantityInStock();
+        int newQuantity = request.getQuantityInStock();
+
         PharmacyMedicine updated = PharmacyMedicine.builder()
                 .id(existing.getId())
                 .pharmacyId(existing.getPharmacyId())
@@ -168,6 +174,21 @@ public class MedicineService {
                 .build();
 
         PharmacyMedicine saved = pharmacyMedicineRepository.save(updated);
+
+        //Publish RabbitMQ event
+        StockEvent event = StockEvent.builder()
+                .pharmacyId(pharmacyId)
+                .medicineId(medicineId)
+                .medicineName(existing.getMedicine().getName())
+                .quantity(newQuantity)
+                .build();
+
+        if(newQuantity == 0){
+            stockEventPublisher.publishOutOfStock(event);
+        }else if(oldQuantity == 0 && newQuantity > 0){
+            stockEventPublisher.publishRestocked(event);
+        }
+
         return pharmacyMedicineMapper.toResponse(saved);
     }
 

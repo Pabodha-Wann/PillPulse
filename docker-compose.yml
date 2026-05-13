@@ -25,6 +25,19 @@ services:
     volumes:
       - postgres_medicine_data:/var/lib/postgresql/data
 
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: pillpulse-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"      # AMQP port (services connect here)
+      - "15672:15672"    # Management UI (browser)
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
 volumes:
   postgres_pharmacy_data:
   postgres_medicine_data:
+  rabbitmq_data:
