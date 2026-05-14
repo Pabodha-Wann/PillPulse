@@ -30,11 +30,13 @@ public class AlertSubscription {
     private String medicineName;
 
     @Column(name = "is_active")
-    private Boolean isActive;
+    @Builder.Default
+    private Boolean isActive = true;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @PrePersist
     protected void onCreate(){
         createdAt = LocalDateTime.now();
         isActive = true;
