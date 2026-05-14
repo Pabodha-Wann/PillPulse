@@ -4,11 +4,14 @@ import com.pillpulse.alert_service.dto.request.AlertSubscriptionRequest;
 import com.pillpulse.alert_service.dto.response.AlertSubscriptionResponse;
 import com.pillpulse.alert_service.entity.AlertSubscription;
 import com.pillpulse.alert_service.exception.DuplicateResourceException;
+import com.pillpulse.alert_service.exception.ResourceNotFoundException;
 import com.pillpulse.alert_service.mapper.AlertSubscriptionMapper;
 import com.pillpulse.alert_service.repository.AlertSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,5 +38,29 @@ public class AlertService {
         return alertSubscriptionMapper.toResponse(saved);
 
     }
+
+
+    public List<AlertSubscriptionResponse> getUserSubscriptions(
+            String userEmail
+    ){
+        return alertSubscriptionRepository.findByUserEmail(userEmail)
+                .stream()
+                .map(alertSubscriptionMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    public void unsubscribe(String userEmail,Long medicineId){
+
+        AlertSubscription subscription = alertSubscriptionRepository
+                .findByUserEmailAndMedicineId(userEmail,medicineId)
+                .orElseThrow(()->new ResourceNotFoundException(
+                        "Subscription not found for this medicine"
+                ));
+
+        subscription.setIsActive(false);
+        alertSubscriptionRepository.save(subscription);
+    }
+
+
 
 }
