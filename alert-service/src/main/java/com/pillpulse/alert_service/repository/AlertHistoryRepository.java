@@ -3,6 +3,8 @@ package com.pillpulse.alert_service.repository;
 import com.pillpulse.alert_service.entity.AlertHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AlertHistoryRepository extends JpaRepository<AlertHistory,Long> {
+import java.util.List;
 
+public interface AlertHistoryRepository extends JpaRepository<AlertHistory,Long> {
+    List<AlertHistory> findByUserEmailOrderBySentAtDesc(String email);
 }

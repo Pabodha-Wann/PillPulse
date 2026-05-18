@@ -1,7 +1,9 @@
 package com.pillpulse.alert_service.controller;
 
 import com.pillpulse.alert_service.dto.request.AlertSubscriptionRequest;
+import com.pillpulse.alert_service.dto.response.AlertHistoryResponse;
 import com.pillpulse.alert_service.dto.response.AlertSubscriptionResponse;
+import com.pillpulse.alert_service.entity.AlertHistory;
 import com.pillpulse.alert_service.service.AlertService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,4 +42,13 @@ public class AlertController {
         alertService.unsubscribe(email,medicineId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/history/{email}")
+    public ResponseEntity<List<AlertHistoryResponse>> getUserAlertHistory(
+        @PathVariable String email
+    ){
+        return ResponseEntity.ok(alertService.getUserAlertHistory(email));
+    }
+
+
 }

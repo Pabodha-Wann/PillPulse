@@ -1,11 +1,15 @@
 package com.pillpulse.alert_service.service;
 
 import com.pillpulse.alert_service.dto.request.AlertSubscriptionRequest;
+import com.pillpulse.alert_service.dto.response.AlertHistoryResponse;
 import com.pillpulse.alert_service.dto.response.AlertSubscriptionResponse;
+import com.pillpulse.alert_service.entity.AlertHistory;
 import com.pillpulse.alert_service.entity.AlertSubscription;
 import com.pillpulse.alert_service.exception.DuplicateResourceException;
 import com.pillpulse.alert_service.exception.ResourceNotFoundException;
+import com.pillpulse.alert_service.mapper.AlertHistoryMapper;
 import com.pillpulse.alert_service.mapper.AlertSubscriptionMapper;
+import com.pillpulse.alert_service.repository.AlertHistoryRepository;
 import com.pillpulse.alert_service.repository.AlertSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,8 @@ public class AlertService {
     private final AlertSubscriptionRepository alertSubscriptionRepository;
     private final AlertSubscriptionMapper alertSubscriptionMapper;
 
+    private final AlertHistoryRepository alertHistoryRepository;
+    private final AlertHistoryMapper alertHistoryMapper;
 
 
     public AlertSubscriptionResponse subscribe(
@@ -43,8 +49,15 @@ public class AlertService {
     public List<AlertSubscriptionResponse> getUserSubscriptions(
             String userEmail
     ){
-        return alertSubscriptionRepository.findByUserEmail(userEmail)
-                .stream()
+        List<AlertSubscription> subscriptions = alertSubscriptionRepository.findByUserEmail(userEmail);
+
+        if (subscriptions.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No subscriptions found for email: " + userEmail
+            );
+        }
+
+        return subscriptions.stream()
                 .map(alertSubscriptionMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -59,6 +72,23 @@ public class AlertService {
 
         subscription.setIsActive(false);
         alertSubscriptionRepository.save(subscription);
+    }
+
+    public List<AlertHistoryResponse> getUserAlertHistory(
+            String userEmail
+    ){
+
+        List<AlertHistory> history = alertHistoryRepository.findByUserEmailOrderBySentAtDesc(userEmail);
+
+        if (history.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No alert history found for email: " + userEmail
+            );
+        }
+
+        return history.stream()
+                .map(alertHistoryMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
 
