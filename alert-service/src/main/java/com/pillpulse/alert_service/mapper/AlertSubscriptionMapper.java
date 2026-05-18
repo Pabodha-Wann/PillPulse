@@ -12,6 +12,7 @@ public interface AlertSubscriptionMapper {
     @Mapping(target= "id",ignore = true)
     @Mapping(target = "createdAt",ignore = true)
     @Mapping(target = "isActive",ignore = true)
+    @Mapping(target = "medicineName", ignore = true)
     AlertSubscription toEntity(AlertSubscriptionRequest alertSubscriptionRequest);
 
     AlertSubscriptionResponse toResponse(AlertSubscription alertSubscription);

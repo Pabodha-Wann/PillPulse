@@ -1,5 +1,6 @@
 package com.pillpulse.alert_service.service;
 
+import com.pillpulse.alert_service.client.MedicineClient;
 import com.pillpulse.alert_service.dto.request.AlertSubscriptionRequest;
 import com.pillpulse.alert_service.dto.response.AlertHistoryResponse;
 import com.pillpulse.alert_service.dto.response.AlertSubscriptionResponse;
@@ -29,11 +30,20 @@ public class AlertService {
 
     private final AlertHistoryRepository alertHistoryRepository;
     private final AlertHistoryMapper alertHistoryMapper;
+    private final MedicineClient medicineClient;
 
 
     public AlertSubscriptionResponse subscribe(
             AlertSubscriptionRequest request
     ){
+        String medicineName = medicineClient.getMedicineName(request.getMedicineId());
+
+        if (medicineName == null) {
+            throw new ResourceNotFoundException(
+                    "Medicine not found with id: " + request.getMedicineId()
+            );
+        }
+
         Optional<AlertSubscription> existing = alertSubscriptionRepository
                 .findByUserEmailAndMedicineId(request.getUserEmail(),request.getMedicineId());
 
@@ -52,6 +62,7 @@ public class AlertService {
         }
 
         AlertSubscription alertSubscription = alertSubscriptionMapper.toEntity(request);
+        alertSubscription.setMedicineName(medicineName);
         AlertSubscription saved = alertSubscriptionRepository.save(alertSubscription);
         return alertSubscriptionMapper.toResponse(saved);
 
