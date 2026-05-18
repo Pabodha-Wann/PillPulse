@@ -18,4 +18,5 @@ public interface AlertSubscriptionRepository extends JpaRepository<AlertSubscrip
 
     Optional<AlertSubscription> findByUserEmailAndMedicineId(String userEmail, Long medicineId);
 
+    List<AlertSubscription> findByMedicineIdAndIsActiveTrue(Long medicineId);
 }

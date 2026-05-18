@@ -5,6 +5,7 @@ import com.pillpulse.alert_service.dto.response.AlertHistoryResponse;
 import com.pillpulse.alert_service.dto.response.AlertSubscriptionResponse;
 import com.pillpulse.alert_service.entity.AlertHistory;
 import com.pillpulse.alert_service.entity.AlertSubscription;
+import com.pillpulse.alert_service.event.StockEvent;
 import com.pillpulse.alert_service.exception.DuplicateResourceException;
 import com.pillpulse.alert_service.exception.ResourceNotFoundException;
 import com.pillpulse.alert_service.mapper.AlertHistoryMapper;
@@ -92,5 +93,33 @@ public class AlertService {
     }
 
 
+    //---------RabbitMQ event handlers--------------
+    public void handleOutOfStock(StockEvent event){
+        log.info("Medicine {} is now OUT OF STOCK at pharmacy {}",
+                event.getMedicineName(), event.getPharmacyId());
+    }
 
+    public void handleRestocked(StockEvent event){
+
+        //find all users subscribe to medicine
+        List<AlertSubscription> subscription = alertSubscriptionRepository
+                .findByMedicineIdAndIsActiveTrue(event.getMedicineId());
+
+        log.info("Medicine {} restocked - notifying {} subscribers"
+                ,event.getMedicineName(),subscription.size());
+
+        subscription.forEach(sub-> {
+            String message = String.format(
+                    "%s is now available at Pharmacy ID %d. Quantity: %d",
+                    event.getMedicineName(),
+                    event.getPharmacyId(),
+                    event.getQuantity()
+            );
+            AlertHistory history = alertHistoryMapper.toEntity(sub,event,message);
+
+            alertHistoryRepository.save(history);
+            log.info("Notified {} : {}", sub.getUserEmail(), message);
+        });
+
+    }
 }
