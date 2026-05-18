@@ -1,5 +1,7 @@
 package com.pillpulse.search_service.service;
 
+import com.pillpulse.search_service.client.MedicineClient;
+import com.pillpulse.search_service.client.PharmacyClient;
 import com.pillpulse.search_service.dto.external.PharmacyMedicineSearchResponse;
 import com.pillpulse.search_service.dto.external.PharmacyResponse;
 import com.pillpulse.search_service.dto.response.SearchResult;
@@ -8,7 +10,6 @@ import com.pillpulse.search_service.util.HaversineUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -19,7 +20,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SearchService {
 
-    private final WebClient.Builder webClientBuilder;
+    private final PharmacyClient pharmacyClient;    // ← injected
+    private final MedicineClient medicineClient;
 
     public List<SearchResult> searchPharmacies(
             String medicineName,
@@ -31,14 +33,7 @@ public class SearchService {
         //Call medicine-service - GET medicines with pharmacies
         log.info("Searching for medicine: {}",medicineName);
 
-        List<PharmacyMedicineSearchResponse> pharmacyMedicines =
-                webClientBuilder.build()
-                        .get()
-                        .uri("http://medicine-service/api/medicines/search?name=" + medicineName)
-                        .retrieve()
-                        .bodyToFlux(PharmacyMedicineSearchResponse.class)
-                        .collectList()
-                        .block();
+        List<PharmacyMedicineSearchResponse> pharmacyMedicines = medicineClient.searchPharmaciesWithMedicine(medicineName);
 
         if(pharmacyMedicines == null || pharmacyMedicines.isEmpty()){
             throw new ResourceNotFoundException(
@@ -51,12 +46,7 @@ public class SearchService {
         return pharmacyMedicines.stream()
                 .map(pm->{
                     try{
-                        PharmacyResponse pharmacy = webClientBuilder.build()
-                                .get()
-                                .uri("http://pharmacy-service/api/pharmacies/{id}",pm.getPharmacyId())
-                                .retrieve()
-                                .bodyToMono(PharmacyResponse.class)
-                                .block();
+                        PharmacyResponse pharmacy = pharmacyClient.getPharmacyById(pm.getPharmacyId());
 
                         if(pharmacy == null) return null;
 
