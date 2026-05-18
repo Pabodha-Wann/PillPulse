@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,15 +34,25 @@ public class AlertService {
     public AlertSubscriptionResponse subscribe(
             AlertSubscriptionRequest request
     ){
-        if(alertSubscriptionRepository.existsByUserEmailAndMedicineId(
-                request.getUserEmail(),request.getMedicineId())){
-            throw new DuplicateResourceException("Already subscribe to this medicine");
+        Optional<AlertSubscription> existing = alertSubscriptionRepository
+                .findByUserEmailAndMedicineId(request.getUserEmail(),request.getMedicineId());
+
+        if(existing.isPresent()){
+            if(existing.get().getIsActive()){
+                    throw new DuplicateResourceException(
+                            "Already subscribe to this medicine"
+                    );
+            }else {
+                //if previuosly unsubscribed -> reactive again
+                AlertSubscription reactivated = existing.get();
+                reactivated.setIsActive(true);
+                AlertSubscription saved = alertSubscriptionRepository.save(reactivated);
+                return alertSubscriptionMapper.toResponse(saved);
+            }
         }
 
         AlertSubscription alertSubscription = alertSubscriptionMapper.toEntity(request);
-
         AlertSubscription saved = alertSubscriptionRepository.save(alertSubscription);
-
         return alertSubscriptionMapper.toResponse(saved);
 
     }
