@@ -23,17 +23,27 @@ public class PharmacyService {
     private final PharmacyMapper pharmacyMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final KeycloakService keycloakService;
 
     public PharmacyResponse register(PharmacyRegisterRequest request){
         if(pharmacyRepository.existsByEmail(request.getEmail())){
             throw new DuplicateResourceException("Email already registered:"+ request.getEmail());
         }
 
+        //save to DB
         Pharmacy pharmacy = pharmacyMapper.toEntity(request);
-
         pharmacy.setPassword(passwordEncoder.encode(request.getPassword()));
-
         Pharmacy saved = pharmacyRepository.save(pharmacy);
+
+        //create user in keycloak
+        try{
+            keycloakService.createKeycloakUser(request);
+        }catch (Exception e){
+            pharmacyRepository.delete(saved);
+            throw new RuntimeException(
+                    "Registration failed: " + e.getMessage()
+            );
+        }
 
         return pharmacyMapper.toResponse(saved);
     }
@@ -52,18 +62,18 @@ public class PharmacyService {
                 .collect(Collectors.toList());
     }
 
-    public String login(PharmacyLoginRequest request){
-        Pharmacy pharmacy = pharmacyRepository.findByEmail(request.getEmail())
-                .orElseThrow(()-> new RuntimeException("Pharmacy not found"));
-
-        //check password
-        if(!passwordEncoder.matches(request.getPassword(),pharmacy.getPassword())){
-            throw new RuntimeException("Invalid Password");
-        }
-
-        //generate and return Jwt token
-        return jwtService.generateToken(pharmacy.getEmail());
-    }
+//    public String login(PharmacyLoginRequest request){
+//        Pharmacy pharmacy = pharmacyRepository.findByEmail(request.getEmail())
+//                .orElseThrow(()-> new RuntimeException("Pharmacy not found"));
+//
+//        //check password
+//        if(!passwordEncoder.matches(request.getPassword(),pharmacy.getPassword())){
+//            throw new RuntimeException("Invalid Password");
+//        }
+//
+//        //generate and return Jwt token
+//        return jwtService.generateToken(pharmacy.getEmail());
+//    }
 
 
 }

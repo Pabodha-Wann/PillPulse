@@ -35,12 +35,12 @@ public class PharmacyController {
         return ResponseEntity.ok(pharmacyService.getAllPharmacies());
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<String> login(
-            @RequestBody PharmacyLoginRequest request
-    ){
-        String token = pharmacyService.login(request);
-        return ResponseEntity.ok(token);
-    }
+//    @PostMapping("/login")
+//    public ResponseEntity<String> login(
+//            @RequestBody PharmacyLoginRequest request
+//    ){
+//        String token = pharmacyService.login(request);
+//        return ResponseEntity.ok(token);
+//    }
 
 }
