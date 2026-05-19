@@ -49,6 +49,16 @@ services:
     volumes:
       - postgres_alert_data:/var/lib/postgresql/data
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.0
+    container_name: pillpulse-keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080"
+    command: start-dev
+
 
 volumes:
   postgres_pharmacy_data:

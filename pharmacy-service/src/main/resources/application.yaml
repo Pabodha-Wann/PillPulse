@@ -28,6 +28,16 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: false
 
+
+
+keycloak:
+  auth-server-url: http://localhost:8180
+  realm: pillpulse
+  client-id: pillpulse-gateway
+  client-secret: ${KEYCLOAK_CLIENT_SECRET}
+  admin-username: admin
+  admin-password: admin
+
 # eureka configurations
 eureka:
   client:
