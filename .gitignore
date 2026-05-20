@@ -18,3 +18,5 @@ bin/
 # OS ignores
 .DS_Store
 Thumbs.db
+
+.vscode

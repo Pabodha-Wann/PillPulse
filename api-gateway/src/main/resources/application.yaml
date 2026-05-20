@@ -5,32 +5,41 @@ spring:
   application:
     name: api-gateway
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/pillpulse
+          jwk-set-uri: http://localhost:8180/realms/pillpulse/protocol/openid-connect/certs
+
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
-      routes:
-        - id: pharmacy-service
-          uri: lb://pharmacy-service
-          predicates:
-            - Path=/api/pharmacies/**
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+              lower-case-service-id: true
+          routes:
+            - id: pharmacy-service
+              uri: lb://pharmacy-service
+              predicates:
+                - Path=/api/pharmacies/**
 
-        - id: medicine-service
-          uri: lb://medicine-service
-          predicates:
-            - Path=/api/medicines/**
+            - id: medicine-service
+              uri: lb://medicine-service
+              predicates:
+                - Path=/api/medicines/**
 
-        - id: search-service
-          uri: lb://search-service
-          predicates:
-            - Path=/api/search/**
+            - id: search-service
+              uri: lb://search-service
+              predicates:
+                - Path=/api/search/**
 
-        - id: alert-service
-          uri: lb://alert-service
-          predicates:
-            - Path=/api/alerts/**
+            - id: alert-service
+              uri: lb://alert-service
+              predicates:
+                - Path=/api/alerts/**
 
 eureka:
   client:
