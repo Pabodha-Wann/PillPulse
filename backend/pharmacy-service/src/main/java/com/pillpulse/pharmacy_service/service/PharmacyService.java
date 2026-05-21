@@ -40,6 +40,7 @@ public class PharmacyService {
             keycloakService.createKeycloakUser(request);
         }catch (Exception e){
             pharmacyRepository.delete(saved);
+//            log.error(" Keycloak creation failed, rolled back pharmacy: {}", request.getEmail());
             throw new RuntimeException(
                     "Registration failed: " + e.getMessage()
             );

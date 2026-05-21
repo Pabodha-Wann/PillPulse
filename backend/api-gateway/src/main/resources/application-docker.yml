@@ -4,6 +4,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://keycloak:8080/realms/pillpulse
+          jwk-set-uri: http://keycloak:8080/realms/pillpulse/protocol/openid-connect/certs
 
 eureka:
   client:
