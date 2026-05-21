@@ -1,0 +1,177 @@
+version: '3.8'
+
+services:
+  postgres-pharmacy:
+    image: postgres:15-alpine
+    container_name: pillpulse-pharmacy-db
+    environment:
+      POSTGRES_DB: pharmacy_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 20031217
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_pharmacy_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-medicine:
+    image: postgres:15-alpine
+    container_name: pillpulse-medicine-db
+    environment:
+      POSTGRES_DB: medicine_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 20031217
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_medicine_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: pillpulse-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"      # AMQP port (services connect here)
+      - "15672:15672"    # Management UI (browser)
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-alert:
+    image: postgres:15-alpine
+    container_name: pillpulse-alert-db
+    environment:
+      POSTGRES_DB: alert_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 20031217
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_alert_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.0
+    container_name: pillpulse-keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080"
+    command: start-dev
+
+
+  # ─── Services ─────────────────────────────────────────────────
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: pillpulse-eureka
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pharmacy-service:
+    build: ./pharmacy-service
+    container_name: pillpulse-pharmacy
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_PASSWORD: "20031217"
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+    depends_on:
+      postgres-pharmacy:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  medicine-service:
+    build: ./medicine-service
+    container_name: pillpulse-medicine
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_PASSWORD: "20031217"
+    depends_on:
+      postgres-medicine:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  search-service:
+    build: ./search-service
+    container_name: pillpulse-search
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  alert-service:
+    build: ./alert-service
+    container_name: pillpulse-alert
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_PASSWORD: "20031217"
+    depends_on:
+      postgres-alert:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: pillpulse-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+
+
+volumes:
+  postgres_pharmacy_data:
+  postgres_medicine_data:
+  postgres_alert_data:
+  rabbitmq_data:

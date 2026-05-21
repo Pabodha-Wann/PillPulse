@@ -1,0 +1,23 @@
+# Standard Spring Boot / Maven ignores
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# IntelliJ / IDE ignores
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+bin/
+
+# OS ignores
+.DS_Store
+Thumbs.db
+
+.vscode
+.env

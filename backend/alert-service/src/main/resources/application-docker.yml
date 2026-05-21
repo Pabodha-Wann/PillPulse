@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres-alert:5432/alert_db
+    username: postgres
+    password: "20031217"
+
+
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/

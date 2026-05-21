@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="pharmacy-service-0.0.1-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/backend/pharmacy-service/target/pharmacy-service-0.0.1-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
