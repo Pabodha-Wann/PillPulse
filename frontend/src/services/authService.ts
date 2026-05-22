@@ -11,7 +11,7 @@ export const authService = {
         longitude: number
         phone: string
     }): Promise<Pharmacy> => {
-        const response = await axiosInstance.post('/api/register', data)
+        const response = await axiosInstance.post('/api/pharmacies/register', data)
         return response.data
     },
 

@@ -36,7 +36,7 @@ public class KeycloakService {
     private Keycloak getKeycloakInstance(){
         return KeycloakBuilder.builder()
                 .serverUrl(serverUrl)
-                .realm("master")
+                .realm(realm)
                 .grantType("client_credentials")
                 .clientId(clientId)
                 .clientSecret(clientSecret)

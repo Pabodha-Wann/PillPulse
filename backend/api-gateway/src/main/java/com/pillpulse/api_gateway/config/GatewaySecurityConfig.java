@@ -9,6 +9,11 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.config.Customizer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import java.util.Arrays;
 import reactor.core.publisher.Mono;
 
 @Configuration
@@ -17,10 +22,12 @@ public class GatewaySecurityConfig {
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(auth -> auth
                         // PUBLIC ROUTES (No token needed)
 
+                        .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Ensure OPTIONS is allowed everywhere
                         .pathMatchers(HttpMethod.POST, "/api/pharmacies/register").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/search/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/medicines/{id}").permitAll()
@@ -42,6 +49,18 @@ public class GatewaySecurityConfig {
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(
                                 keycloakJwtConverter())));
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     // Extract roles from Keycloak JWT token
