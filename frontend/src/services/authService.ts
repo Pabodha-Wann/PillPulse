@@ -16,7 +16,7 @@ export const authService = {
     },
 
 
-    loginPharamcy: async (email: string, password: string) => {
+    loginPharmacy: async (email: string, password: string) => {
 
         const response = await fetch(
             `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/token`,

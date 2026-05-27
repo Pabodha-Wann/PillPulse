@@ -77,7 +77,8 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - "8180:8080"
-    command: start-dev
+    # Tells Keycloak to import realms on startup
+    command: start-dev --import-realm
     volumes:
       - ./pillpulse-realm.json:/opt/keycloak/data/import/realm.json:ro
 
