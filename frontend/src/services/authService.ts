@@ -18,29 +18,13 @@ export const authService = {
 
     loginPharmacy: async (email: string, password: string) => {
 
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/token`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    username: email,
-                    password: password,
-                    client_id: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID!,
-                    client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
-                    grant_type: 'password',
-                }).toString(),
-            }
-        )
 
+        const response = await axiosInstance.post('/api/auth/login', {
+            email,
+            password,
+        })
 
-        if (!response.ok) {
-            throw new Error('Login failed')
-        }
-
-        return response.json()
+        return response.data
     },
 
     // Get pharmacy details

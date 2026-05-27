@@ -38,6 +38,11 @@ spring:
               predicates:
                 - Path=/api/pharmacies/**
 
+            - id: auth-routing
+              uri: lb://pharmacy-service
+              predicates:
+                - Path=/api/auth/**
+
             - id: medicine-service
               uri: lb://medicine-service
               predicates:
