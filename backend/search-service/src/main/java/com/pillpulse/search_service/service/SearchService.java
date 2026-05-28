@@ -70,6 +70,8 @@ public class SearchService {
                                 .quantityInStock(pm.getQuantityInStock())
                                 .price(pm.getPrice())
                                 .status(pm.getStatus())
+                                .latitude(pharmacy.getLatitude().doubleValue())
+                                .longitude(pharmacy.getLongitude().doubleValue())
                                 .build();
 
 

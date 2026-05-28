@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { useAuthStore } from '@/store/authStore'
 import { useRouter } from 'next/navigation'
@@ -8,6 +9,11 @@ import { toast } from 'react-toastify'
 export function Navbar() {
     const { user, isLoggedIn, logout } = useAuthStore()
     const router = useRouter()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const handleLogout = () => {
         logout()
@@ -34,7 +40,10 @@ export function Navbar() {
 
                 {/* Right side items */}
                 <div className="flex gap-4 items-center">
-                    {!isLoggedIn ? (
+                    {!mounted ? (
+                        // Return empty/loading state to match SSR until mounted on client
+                        <div className="w-10 h-6"></div>
+                    ) : !isLoggedIn ? (
                         <>
                             <div className="hidden md:flex items-center gap-4">
                                 <Link href="/register" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">

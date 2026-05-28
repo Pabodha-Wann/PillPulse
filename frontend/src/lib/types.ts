@@ -38,6 +38,8 @@ export interface SearchResult {
     quantityInStock: number
     price: number
     status: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK'
+    latitude: number
+    longitude: number
 }
 
 export interface AlertSubscription {

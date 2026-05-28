@@ -21,4 +21,6 @@ public class SearchResult {
     private Integer quantityInStock;
     private BigDecimal price;
     private String status;
+    private Double latitude;
+    private Double longitude;
 }
