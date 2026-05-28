@@ -44,8 +44,8 @@ export const medicineService = {
 
 
     // Get medicines in pharmacy
-    getPharmacyMedicines: async (pharmacId: number): Promise<PharmacyMedicine[]> => {
-        const response = await axiosInstance.get(`/api/medicines/pharmacy/${pharmacId}`)
+    getPharmacyMedicines: async (pharmacyId: number): Promise<PharmacyMedicine[]> => {
+        const response = await axiosInstance.get(`/api/medicines/pharmacy/${pharmacyId}`)
         return response.data;
     },
 

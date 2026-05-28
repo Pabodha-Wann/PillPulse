@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
 export function Navbar() {
-    const { user, token, logout } = useAuthStore()
+    const { user, isLoggedIn, logout } = useAuthStore()
     const router = useRouter()
 
     const handleLogout = () => {
@@ -34,7 +34,7 @@ export function Navbar() {
 
                 {/* Right side items */}
                 <div className="flex gap-4 items-center">
-                    {!token ? (
+                    {!isLoggedIn ? (
                         <>
                             <div className="hidden md:flex items-center gap-4">
                                 <Link href="/register" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">

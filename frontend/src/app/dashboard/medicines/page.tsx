@@ -4,9 +4,14 @@ import { useState, useEffect } from 'react'
 import { medicineService } from '@/services/medicineService'
 import { toast } from 'react-toastify'
 import type { Medicine, PharmacyMedicine } from '@/lib/types'
+import { useAuthStore } from '@/store/authStore'
+import { useRouter } from 'next/router'
 
 export default function MedicinesPage() {
-    const pharmacyId = 1 // Mock - you'll get this from auth later
+    const { user, isAuthenticated } = useAuthStore()
+    const router = useRouter()
+    const pharmacyId = user?.id
+
     const [medicines, setMedicines] = useState<Medicine[]>([])
     const [pharmacyMedicines, setPharmacyMedicines] = useState<PharmacyMedicine[]>([])
     const [loading, setLoading] = useState(false)
@@ -17,18 +22,29 @@ export default function MedicinesPage() {
 
     // Load data on mount
     useEffect(() => {
-        loadData()
-    }, [])
+        if (typeof window !== 'undefined') {
+            if (!isAuthenticated()) {
+                toast.error("Session missing. Please log in.")
+                router.push('/')
+                return
+            }
+
+            if (pharmacyId) {
+                loadData()
+            }
+        }
+    }, [pharmacyId, isAuthenticated])
 
     const loadData = async () => {
         setLoading(true)
         try {
             const [allMeds, pharmMeds] = await Promise.all([
                 medicineService.getAllMedicines(),
-                medicineService.getPharmacyMedicines(pharmacyId),
+                medicineService.getPharmacyMedicines(pharmacyId!),
             ])
             setMedicines(allMeds)
             setPharmacyMedicines(pharmMeds)
+
         } catch (error) {
             toast.error('Failed to load medicines')
             console.error(error)
@@ -47,7 +63,7 @@ export default function MedicinesPage() {
 
         try {
             await medicineService.addMedicineToPharmacy({
-                pharmacyId,
+                pharmacyId: pharmacyId!,
                 medicineId: selectedMedicine,
                 quantityInStock: parseInt(quantity),
                 price: parseFloat(price),
@@ -68,7 +84,7 @@ export default function MedicinesPage() {
         if (!newQuantity) return
 
         try {
-            await medicineService.updatePharmacyMedicineStock(pharmacyId, medicineId, {
+            await medicineService.updatePharmacyMedicineStock(pharmacyId!, medicineId, {
                 quantityInStock: parseInt(newQuantity),
                 price: 0,
             })
@@ -80,7 +96,13 @@ export default function MedicinesPage() {
         }
     }
 
-    if (loading) return <p className="p-8">Loading...</p>
+    if (loading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-slate-50">
+                <p className="text-slate-500 font-medium animate-pulse">Syncing PillPulse Inventory...</p>
+            </div>
+        )
+    }
 
     return (
         <div className="p-8 md:p-12 max-w-6xl w-full mx-auto">
@@ -205,13 +227,12 @@ export default function MedicinesPage() {
                                         <div>
                                             <p className="text-slate-400 font-medium mb-1 uppercase tracking-wider text-[11px]">Status</p>
                                             <span
-                                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                                    med.status === 'IN_STOCK'
-                                                        ? 'bg-emerald-50 text-emerald-600'
-                                                        : med.status === 'LOW_STOCK'
-                                                            ? 'bg-amber-50 text-amber-600'
-                                                            : 'bg-rose-50 text-rose-600'
-                                                }`}
+                                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${med.status === 'IN_STOCK'
+                                                    ? 'bg-emerald-50 text-emerald-600'
+                                                    : med.status === 'LOW_STOCK'
+                                                        ? 'bg-amber-50 text-amber-600'
+                                                        : 'bg-rose-50 text-rose-600'
+                                                    }`}
                                             >
                                                 {med.status === 'IN_STOCK' ? 'In Stock' : med.status === 'LOW_STOCK' ? 'Low Stock' : 'Out of Stock'}
                                             </span>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
@@ -10,7 +10,14 @@ import Link from 'next/link'
 export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const router = useRouter()
-    const { setAuth } = useAuthStore()
+    const { setAuth, isLoggedIn } = useAuthStore()
+
+    // Redirect to dashboard if already logged in
+    useEffect(() => {
+        if (isLoggedIn) {
+            router.push('/dashboard')
+        }
+    }, [isLoggedIn, router])
 
     const [credentials, setCredentials] = useState({
         email: '',
@@ -31,8 +38,22 @@ export default function LoginPage() {
         try {
             const response = await authService.loginPharmacy(credentials.email, credentials.password)
 
-            // Save token to Zustand store
-            setAuth({ email: credentials.email }, response.access_token)
+            const accesstoken = response.access_token
+
+
+            // Temporary mock pharmacy object until backend returns full profile
+            const pharmacy = {
+                id: 1,
+                name: "My Pharmacy",
+                email: credentials.email,
+                address: "",
+                latitude: 0,
+                longitude: 0,
+                phone: ""
+            }
+
+            // Save token and user to Zustand store
+            setAuth(pharmacy, accesstoken)
 
             toast.success('Login successful!')
             router.push('/dashboard')

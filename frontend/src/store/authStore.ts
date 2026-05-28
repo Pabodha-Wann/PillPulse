@@ -1,33 +1,68 @@
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+
+interface Pharmacy {
+    id: number
+    name: string
+    email: string
+    address: string
+    latitude: number
+    longitude: number
+    phone: string
+}
 
 interface AuthState {
-    user: any
+    user: Pharmacy | null
     token: string | null
-    isPharmacy: boolean
-    setAuth: (user: any, token: string) => void
+    isLoggedIn: boolean
+    setAuth: (user: Pharmacy, token: string) => void
     logout: () => void
+    getPharmacyId: () => number | null,
+    isAuthenticated: () => boolean
+}
+
+const getInitialState = () => {
+    if (typeof window === 'undefined') {
+        return {
+            user: null,
+            token: null,
+            isLoggedIn: false
+        }
+    }
+
+    try {
+        const stored = localStorage.getItem(('pillpulse-auth'))
+        if (stored) {
+            const { user, token, isLoggedIn } = JSON.parse(stored)
+            return { user, token, isLoggedIn }
+        }
+    } catch (e) {
+        console.error("Failed to parse auth tokens", e)
+    }
+
+    return { user: null, token: null, isLoggedIn: false }
 }
 
 export const useAuthStore = create<AuthState>()(
-    persist(
-        (set) => ({
-            user: null,
-            token: null,
-            isPharmacy: false,
-            setAuth: (user, token) => set({
-                user,
-                token,
-                isPharmacy: true
-            }),
-            logout: () => set({
+    (set, get) => ({
+        ...getInitialState(),
+
+        setAuth: (user: Pharmacy, token: string) => {
+            set({ user, token, isLoggedIn: true })
+            localStorage.setItem('pillpulse-auth', JSON.stringify({ user, token, isLoggedIn: true }))
+        },
+
+        logout: () => {
+            set({
                 user: null,
                 token: null,
-                isPharmacy: false
+                isLoggedIn: false
             })
-        }),
-        {
-            name: 'auth-storage', // name of the item in localStorage
-        }
-    )
+            localStorage.removeItem('pillpulse-auth')
+        },
+
+        getPharmacyId: () => get().user?.id ?? null,
+
+        isAuthenticated: () => !!get().token || get().isLoggedIn,
+    })
 )
+
