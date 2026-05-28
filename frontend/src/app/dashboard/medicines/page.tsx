@@ -5,7 +5,7 @@ import { medicineService } from '@/services/medicineService'
 import { toast } from 'react-toastify'
 import type { Medicine, PharmacyMedicine } from '@/lib/types'
 import { useAuthStore } from '@/store/authStore'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 
 export default function MedicinesPage() {
     const { user, isAuthenticated } = useAuthStore()
@@ -83,16 +83,52 @@ export default function MedicinesPage() {
     const handleUpdateStock = async (medicineId: number, newQuantity: string) => {
         if (!newQuantity) return
 
+        const existingMed = pharmacyMedicines.find(med => med.medicineId === medicineId)
+        const existingPrice = existingMed ? existingMed.price : 0
+
         try {
             await medicineService.updatePharmacyMedicineStock(pharmacyId!, medicineId, {
                 quantityInStock: parseInt(newQuantity),
-                price: 0,
+                price: existingPrice,
             })
 
             toast.success('Stock updated!')
             await loadData()
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Failed to update stock')
+        }
+    }
+
+    const handleUpdatePrice = async (medicineId: number, newPrice: string) => {
+        if (!newPrice) return
+
+        const existingMed = pharmacyMedicines.find(med => med.medicineId === medicineId)
+        const existingQty = existingMed ? existingMed.quantityInStock : 0
+
+        try {
+            await medicineService.updatePharmacyMedicineStock(pharmacyId!, medicineId, {
+                quantityInStock: existingQty,
+                price: parseFloat(newPrice),
+            })
+
+            toast.success('Price updated!')
+            await loadData()
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to update price')
+        }
+    }
+
+    const handleRemoveMedicine = async (medicineId: number) => {
+        if (!window.confirm("Are you sure you want to remove this medicine from your inventory?")) {
+            return
+        }
+
+        try {
+            await medicineService.removePharmacyMedicine(pharmacyId!, medicineId)
+            toast.success('Medicine removed from inventory!')
+            await loadData()
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to remove medicine')
         }
     }
 
@@ -240,20 +276,51 @@ export default function MedicinesPage() {
                                     </div>
                                 </div>
 
-                                {/* Update Stock Input */}
-                                <div className="flex items-center gap-3 border-t md:border-t-0 pt-4 md:pt-0">
-                                    <label className="text-sm font-medium text-slate-500 hidden md:block">Update Qty:</label>
-                                    <input
-                                        type="number"
-                                        placeholder="New qty"
-                                        onBlur={(e) => {
-                                            if (e.target.value) {
-                                                handleUpdateStock(med.medicineId, e.target.value)
-                                                e.target.value = ''
-                                            }
-                                        }}
-                                        className="border border-slate-200 p-2 rounded-lg w-32 focus:outline-none focus:ring-2 focus:ring-[#173822] focus:border-transparent bg-slate-50 text-sm transition-all"
-                                    />
+                                {/* Update Controls (Qty, Price, Delete) */}
+                                <div className="flex flex-wrap items-center gap-4 border-t md:border-t-0 pt-4 md:pt-0">
+                                    {/* Qty Input */}
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider hidden md:block">Qty:</label>
+                                        <input
+                                            type="number"
+                                            placeholder="New qty"
+                                            onBlur={(e) => {
+                                                if (e.target.value) {
+                                                    handleUpdateStock(med.medicineId, e.target.value)
+                                                    e.target.value = ''
+                                                }
+                                            }}
+                                            className="border border-slate-200 p-2 rounded-lg w-24 focus:outline-none focus:ring-2 focus:ring-[#173822] focus:border-transparent bg-slate-50 text-sm text-slate-700 font-medium transition-all"
+                                        />
+                                    </div>
+
+                                    {/* Price Input */}
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider hidden md:block">Price:</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="New price"
+                                            onBlur={(e) => {
+                                                if (e.target.value) {
+                                                    handleUpdatePrice(med.medicineId, e.target.value)
+                                                    e.target.value = ''
+                                                }
+                                            }}
+                                            className="border border-slate-200 p-2 rounded-lg w-24 focus:outline-none focus:ring-2 focus:ring-[#173822] focus:border-transparent bg-slate-50 text-sm text-slate-700 font-medium transition-all"
+                                        />
+                                    </div>
+
+                                    {/* Delete Button */}
+                                    <button
+                                        onClick={() => handleRemoveMedicine(med.medicineId)}
+                                        className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all"
+                                        title="Remove from inventory"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                         ))}
