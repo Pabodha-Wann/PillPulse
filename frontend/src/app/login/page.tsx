@@ -39,18 +39,7 @@ export default function LoginPage() {
             const response = await authService.loginPharmacy(credentials.email, credentials.password)
 
             const accesstoken = response.access_token
-
-
-            // Temporary mock pharmacy object until backend returns full profile
-            const pharmacy = {
-                id: 1,
-                name: "My Pharmacy",
-                email: credentials.email,
-                address: "",
-                latitude: 0,
-                longitude: 0,
-                phone: ""
-            }
+            const pharmacy = response.user
 
             // Save token and user to Zustand store
             setAuth(pharmacy, accesstoken)

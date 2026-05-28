@@ -18,6 +18,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.pillpulse.pharmacy_service.repository.PharmacyRepository;
+import com.pillpulse.pharmacy_service.mapper.PharmacyMapper;
+import com.pillpulse.pharmacy_service.dto.response.PharmacyResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -37,6 +40,8 @@ public class TokenController {
     @Value("${keycloak.client-secret}")
     private String clientSecret;
 
+    private final PharmacyRepository pharmacyRepository;
+    private final PharmacyMapper pharmacyMapper;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @PostMapping("/login")
@@ -64,14 +69,27 @@ public class TokenController {
             log.info("🔑 Attempting login for: {}", request.getEmail());
 
             // Call Keycloak
-            Map<String, Object> response = restTemplate.postForObject(
+            Map<?, ?> tokenResponse = restTemplate.postForObject(
                     tokenUrl,
                     body,
                     Map.class
             );
 
+            // Fetch real database profile
+            var pharmacy = pharmacyRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new ResourceNotFoundException("Pharmacy profile not found: " + request.getEmail()));
+            
+            PharmacyResponse pharmacyProfile = pharmacyMapper.toResponse(pharmacy);
+
+            // Construct enriched response
+            Map<String, Object> enrichedResponse = new HashMap<>();
+            enrichedResponse.put("access_token", tokenResponse.get("access_token"));
+            enrichedResponse.put("refresh_token", tokenResponse.get("refresh_token"));
+            enrichedResponse.put("expires_in", tokenResponse.get("expires_in"));
+            enrichedResponse.put("user", pharmacyProfile);
+
             log.info("✅ Login successful for: {}", request.getEmail());
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(enrichedResponse);
 
         } catch (RestClientException e) {
             log.error("❌ Keycloak error: {}", e.getMessage());
