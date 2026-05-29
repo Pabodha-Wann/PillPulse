@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const { user, token, logout } = useAuthStore()
+    const { user, token, logout, isAdmin } = useAuthStore()
     const router = useRouter()
     const pathname = usePathname()
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -60,23 +60,49 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         {isSidebarOpen && <span>Overview</span>}
                     </Link>
                     
-                    <Link href="/dashboard/medicines" 
-                        className={`px-3 py-2 rounded-lg font-medium flex items-center gap-3 transition-colors ${isActive('/dashboard/medicines') ? 'bg-[#e8f3d6] text-[#173822]' : 'text-slate-600 hover:bg-slate-100'}`}
-                    >
-                        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        {isSidebarOpen && <span>Inventory</span>}
-                    </Link>
-                    
-                    <Link href="/search" 
-                        className={`px-3 py-2 rounded-lg font-medium flex items-center gap-3 transition-colors ${isActive('/search') ? 'bg-[#e8f3d6] text-[#173822]' : 'text-slate-600 hover:bg-slate-100'}`}
-                    >
-                        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        {isSidebarOpen && <span>Global Search</span>}
-                    </Link>
+                    {isAdmin ? (
+                        <>
+                            {/* System Admin Sidebar Options */}
+                            <Link href="/dashboard/global-medicines" 
+                                className={`px-3 py-2 rounded-lg font-medium flex items-center gap-3 transition-colors ${isActive('/dashboard/global-medicines') ? 'bg-[#e8f3d6] text-[#173822]' : 'text-slate-600 hover:bg-slate-100'}`}
+                            >
+                                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
+                                {isSidebarOpen && <span>Global Catalog</span>}
+                            </Link>
+                            
+                            <Link href="/dashboard/pharmacies" 
+                                className={`px-3 py-2 rounded-lg font-medium flex items-center gap-3 transition-colors ${isActive('/dashboard/pharmacies') ? 'bg-[#e8f3d6] text-[#173822]' : 'text-slate-600 hover:bg-slate-100'}`}
+                            >
+                                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                {isSidebarOpen && <span>Pharmacies</span>}
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            {/* Pharmacy Admin Sidebar Options */}
+                            <Link href="/dashboard/medicines" 
+                                className={`px-3 py-2 rounded-lg font-medium flex items-center gap-3 transition-colors ${isActive('/dashboard/medicines') ? 'bg-[#e8f3d6] text-[#173822]' : 'text-slate-600 hover:bg-slate-100'}`}
+                            >
+                                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                                {isSidebarOpen && <span>Local Inventory</span>}
+                            </Link>
+
+                            <Link href="/search" 
+                                className={`px-3 py-2 rounded-lg font-medium flex items-center gap-3 transition-colors ${isActive('/search') ? 'bg-[#e8f3d6] text-[#173822]' : 'text-slate-600 hover:bg-slate-100'}`}
+                            >
+                                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                {isSidebarOpen && <span>Global Search</span>}
+                            </Link>
+                        </>
+                    )}
                 </nav>
 
                 <div className="p-3 border-t border-slate-200">
