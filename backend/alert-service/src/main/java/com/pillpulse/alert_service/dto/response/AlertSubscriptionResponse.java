@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class AlertSubscriptionResponse {
     private Long id;
     private String userEmail;
+    private String userPhone;
     private Long medicineId;
     private String medicineName;
     private Boolean isActive;

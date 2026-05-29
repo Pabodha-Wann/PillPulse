@@ -34,6 +34,7 @@ export interface SearchResult {
     address: string
     phone: string
     distanceKm: number
+    medicineId: number
     medicineName: string
     quantityInStock: number
     price: number
@@ -45,6 +46,7 @@ export interface SearchResult {
 export interface AlertSubscription {
     id: number
     userEmail: string
+    userPhone?: string
     medicineId: number
     medicineName: string
     isActive: boolean

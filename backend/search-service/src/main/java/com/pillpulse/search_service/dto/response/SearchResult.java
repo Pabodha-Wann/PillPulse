@@ -17,6 +17,7 @@ public class SearchResult {
     private String address;
     private String phone;
     private Double distanceKm;          // how far from user
+    private Long medicineId;
     private String medicineName;
     private Integer quantityInStock;
     private BigDecimal price;

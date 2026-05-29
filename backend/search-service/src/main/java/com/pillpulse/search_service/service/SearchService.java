@@ -66,6 +66,7 @@ public class SearchService {
                                 .address(pharmacy.getAddress())
                                 .phone(pharmacy.getPhone())
                                 .distanceKm(distance)
+                                .medicineId(pm.getMedicineId())
                                 .medicineName(pm.getMedicineName())
                                 .quantityInStock(pm.getQuantityInStock())
                                 .price(pm.getPrice())

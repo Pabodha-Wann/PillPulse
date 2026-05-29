@@ -31,6 +31,7 @@ public class AlertService {
     private final AlertHistoryRepository alertHistoryRepository;
     private final AlertHistoryMapper alertHistoryMapper;
     private final MedicineClient medicineClient;
+    private final TwilioSmsService twilioSmsService;
 
 
     public AlertSubscriptionResponse subscribe(
@@ -56,6 +57,7 @@ public class AlertService {
                 //if previuosly unsubscribed -> reactive again
                 AlertSubscription reactivated = existing.get();
                 reactivated.setIsActive(true);
+                reactivated.setUserPhone(request.getUserPhone());
                 AlertSubscription saved = alertSubscriptionRepository.save(reactivated);
                 return alertSubscriptionMapper.toResponse(saved);
             }
@@ -91,7 +93,7 @@ public class AlertService {
                 .findByUserEmailAndMedicineId(userEmail,medicineId)
                 .orElseThrow(()->new ResourceNotFoundException(
                         "Subscription not found for this medicine"
-                ));
+                    ));
 
         subscription.setIsActive(false);
         alertSubscriptionRepository.save(subscription);
@@ -141,6 +143,17 @@ public class AlertService {
 
             alertHistoryRepository.save(history);
             log.info("Notified {} : {}", sub.getUserEmail(), message);
+
+            // Send real SMS if a user phone number is associated with the subscription
+            if (sub.getUserPhone() != null && !sub.getUserPhone().trim().isEmpty()) {
+                String pharmacyName = event.getPharmacyName() != null ? event.getPharmacyName() : "Pharmacy #" + event.getPharmacyId();
+                twilioSmsService.sendAlert(
+                        sub.getUserPhone().trim(),
+                        event.getMedicineName(),
+                        pharmacyName,
+                        event.getQuantity()
+                );
+            }
         });
 
     }

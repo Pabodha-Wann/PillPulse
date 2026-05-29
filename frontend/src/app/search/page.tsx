@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { searchService } from '@/services/searchService'
+import { alertService } from '@/services/alertService'
 import { toast } from 'react-toastify'
 import type { SearchResult } from '@/lib/types'
 import Link from 'next/link'
@@ -26,6 +27,14 @@ export default function SearchPage() {
     const [loading, setLoading] = useState(false)
     const [searched, setSearched] = useState(false)
     const [selectedPharmacyId, setSelectedPharmacyId] = useState<number | null>(null)
+
+    // Subscription modal state
+    const [subModalOpen, setSubModalOpen] = useState(false)
+    const [selectedMedId, setSelectedMedId] = useState<number | null>(null)
+    const [selectedMedName, setSelectedMedName] = useState('')
+    const [subEmail, setSubEmail] = useState('')
+    const [subPhone, setSubPhone] = useState('')
+    const [submittingSub, setSubmittingSub] = useState(false)
 
     // Refs for scrolling to highlighted cards
     const cardRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
@@ -76,6 +85,7 @@ export default function SearchPage() {
                 location.longitude,
                 radius
             )
+            console.log("Search Results Data: ", data)
             setResults(data)
 
             if (data.length === 0) {
@@ -101,6 +111,37 @@ export default function SearchPage() {
                 behavior: 'smooth',
                 block: 'nearest'
             })
+        }
+    }
+
+    const handleSubscribe = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!selectedMedId) {
+            toast.error('Technical Error: Medicine ID is missing for subscription!')
+            console.error('Subscription Error: selectedMedId is null. Selected name:', selectedMedName)
+            return
+        }
+        if (!subEmail.trim()) {
+            toast.error('Email address is required')
+            return
+        }
+
+        setSubmittingSub(true)
+        try {
+            await alertService.subscribe({
+                userEmail: subEmail.trim(),
+                userPhone: subPhone.trim() || undefined,
+                medicineId: selectedMedId
+            })
+            toast.success(`Subscribed successfully for ${selectedMedName} stock alerts!`)
+            setSubModalOpen(false)
+            setSubEmail('')
+            setSubPhone('')
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to subscribe')
+            console.error(error)
+        } finally {
+            setSubmittingSub(false)
         }
     }
 
@@ -273,7 +314,15 @@ export default function SearchPage() {
                                     </div>
 
                                     {/* Action Button */}
-                                    <button className="mt-4 w-full bg-[#e8f3d6] hover:bg-[#d4e6b5] text-[#173822] py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setSelectedMedId(pharmacy.medicineId)
+                                            setSelectedMedName(pharmacy.medicineName)
+                                            setSubModalOpen(true)
+                                        }}
+                                        className="mt-4 w-full bg-[#e8f3d6] hover:bg-[#d4e6b5] text-[#173822] py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+                                    >
                                         <svg className="w-3.5 h-3.5 text-[#173822]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                                         </svg>
@@ -309,6 +358,93 @@ export default function SearchPage() {
                     </div>
                 )}
             </div>
+
+            {/* Premium Glassmorphic Subscription Modal */}
+            {subModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 transition-all duration-300">
+                    <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl max-w-md w-full overflow-hidden transform transition-all scale-100 duration-300">
+                        <div className="p-6 md:p-8">
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-1">
+                                        Stock Alert Setup
+                                    </h2>
+                                    <p className="text-slate-500 text-sm">
+                                        Get notified instantly when stock becomes available.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setSubModalOpen(false)}
+                                    className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="bg-[#e8f3d6] px-4 py-3 rounded-2xl mb-6 flex items-center gap-3">
+                                <span className="p-2 bg-[#173822] rounded-lg text-white">
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <span className="text-[10px] font-bold text-[#173822]/80 uppercase tracking-wider block">Selected Medicine</span>
+                                    <span className="font-extrabold text-[#173822] text-sm">{selectedMedName}</span>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSubscribe} className="space-y-4">
+                                {/* Email Address */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address *</label>
+                                    <input
+                                        type="email"
+                                        placeholder="yourname@example.com"
+                                        value={subEmail}
+                                        onChange={(e) => setSubEmail(e.target.value)}
+                                        className="w-full border border-slate-200 bg-slate-50/50 p-3 rounded-xl focus:outline-none focus:border-[#8b9d77] focus:ring-4 focus:ring-[#8b9d77]/10 transition-all font-semibold text-gray-900 placeholder:text-slate-400 placeholder:font-normal text-sm"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Phone Number (SMS) */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Phone Number <span className="text-slate-400 font-normal">(Optional for SMS alerts)</span>
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        placeholder="e.g. +94771234567"
+                                        value={subPhone}
+                                        onChange={(e) => setSubPhone(e.target.value)}
+                                        className="w-full border border-slate-200 bg-slate-50/50 p-3 rounded-xl focus:outline-none focus:border-[#8b9d77] focus:ring-4 focus:ring-[#8b9d77]/10 transition-all font-semibold text-gray-900 placeholder:text-slate-400 placeholder:font-normal text-sm"
+                                    />
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSubModalOpen(false)}
+                                        className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-700 py-3 rounded-xl font-bold text-xs transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={submittingSub}
+                                        className="flex-1 bg-[#173822] hover:bg-[#204a2d] text-white py-3 rounded-xl font-bold text-xs transition-all shadow-lg shadow-black/10 disabled:opacity-50"
+                                    >
+                                        {submittingSub ? 'Subscribing...' : 'Activate Alerts'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     )

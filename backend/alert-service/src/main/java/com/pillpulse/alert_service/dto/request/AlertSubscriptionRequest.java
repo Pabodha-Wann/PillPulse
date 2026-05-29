@@ -5,5 +5,6 @@ import lombok.Data;
 @Data
 public class AlertSubscriptionRequest {
     private String userEmail;
+    private String userPhone;
     private Long medicineId;
 }

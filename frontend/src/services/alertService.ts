@@ -5,6 +5,7 @@ export const alertService = {
     // Subscribe to stock alerts for a medicine
     subscribe: async (data: {
         userEmail: string;
+        userPhone?: string;
         medicineId: number;
     }): Promise<AlertSubscription> => {
         const response = await axiosInstance.post('/api/alerts/subscribe', data);

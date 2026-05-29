@@ -23,6 +23,9 @@ public class AlertSubscription {
     @Column(name = "user_email", nullable = false)
     private String userEmail;
 
+    @Column(name = "user_phone")
+    private String userPhone;
+
     @Column(name = "medicine_id",nullable = false)
     private Long medicineId;
 
