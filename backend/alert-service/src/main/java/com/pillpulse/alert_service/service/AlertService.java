@@ -32,6 +32,7 @@ public class AlertService {
     private final AlertHistoryMapper alertHistoryMapper;
     private final MedicineClient medicineClient;
     private final TwilioSmsService twilioSmsService;
+    private final EmailNotificationService emailNotificationService;
 
 
     public AlertSubscriptionResponse subscribe(
@@ -76,12 +77,38 @@ public class AlertService {
             reactivated.setUserEmail(request.getUserEmail());
             reactivated.setUserPhone(request.getUserPhone());
             AlertSubscription saved = alertSubscriptionRepository.save(reactivated);
+
+            // Send subscription confirmation email
+            emailNotificationService.sendSubscriptionConfirmationEmail(saved.getUserEmail(), saved.getMedicineName());
+
+            // Log subscription confirmation to alert history logs
+            alertHistoryRepository.save(AlertHistory.builder()
+                    .userEmail(saved.getUserEmail())
+                    .medicineId(saved.getMedicineId())
+                    .medicineName(saved.getMedicineName())
+                    .pharmacyId(0L)
+                    .message("Re-subscribed to stock alerts via Email/SMS.")
+                    .build());
+
             return alertSubscriptionMapper.toResponse(saved);
         }
 
         AlertSubscription alertSubscription = alertSubscriptionMapper.toEntity(request);
         alertSubscription.setMedicineName(medicineName);
         AlertSubscription saved = alertSubscriptionRepository.save(alertSubscription);
+
+        // Send subscription confirmation email
+        emailNotificationService.sendSubscriptionConfirmationEmail(saved.getUserEmail(), saved.getMedicineName());
+
+        // Log subscription confirmation to alert history logs
+        alertHistoryRepository.save(AlertHistory.builder()
+                .userEmail(saved.getUserEmail())
+                .medicineId(saved.getMedicineId())
+                .medicineName(saved.getMedicineName())
+                .pharmacyId(0L)
+                .message("Subscribed to stock alerts via Email/SMS.")
+                .build());
+
         return alertSubscriptionMapper.toResponse(saved);
 
     }
@@ -119,6 +146,18 @@ public class AlertService {
 
         subscription.setIsActive(false);
         alertSubscriptionRepository.save(subscription);
+
+        // Send unsubscription confirmation email
+        emailNotificationService.sendUnsubscriptionConfirmationEmail(subscription.getUserEmail(), subscription.getMedicineName());
+
+        // Log unsubscription to alert history logs
+        alertHistoryRepository.save(AlertHistory.builder()
+                .userEmail(subscription.getUserEmail())
+                .medicineId(subscription.getMedicineId())
+                .medicineName(subscription.getMedicineName())
+                .pharmacyId(0L)
+                .message("Unsubscribed from stock alerts.")
+                .build());
     }
 
     public List<AlertHistoryResponse> getUserAlertHistory(
@@ -176,6 +215,15 @@ public class AlertService {
                         event.getQuantity()
                 );
             }
+
+            // Send real-time restock alert email
+            String pharmacyName = event.getPharmacyName() != null ? event.getPharmacyName() : "Pharmacy #" + event.getPharmacyId();
+            emailNotificationService.sendRestockAlertEmail(
+                    sub.getUserEmail(),
+                    event.getMedicineName(),
+                    pharmacyName,
+                    event.getQuantity()
+            );
         });
 
     }
