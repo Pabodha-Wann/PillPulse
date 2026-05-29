@@ -35,6 +35,20 @@ public class PharmacyController {
         return ResponseEntity.ok(pharmacyService.getAllPharmacies());
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<PharmacyResponse> updatePharmacy(
+            @PathVariable Long id,
+            @RequestBody PharmacyRegisterRequest request
+    ){
+        return ResponseEntity.ok(pharmacyService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePharmacy(@PathVariable Long id){
+        pharmacyService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
 //    @PostMapping("/login")
 //    public ResponseEntity<String> login(
 //            @RequestBody PharmacyLoginRequest request

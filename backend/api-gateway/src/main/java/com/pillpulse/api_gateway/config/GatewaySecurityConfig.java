@@ -37,11 +37,23 @@ public class GatewaySecurityConfig {
                         // SEMI-PUBLIC ROUTES (Just needs an email, no account)
 
                         // PROTECTED ROUTES
-                        .pathMatchers(HttpMethod.POST, "/api/medicines/**").hasRole("PHARMACY_ADMIN")
-                        .pathMatchers(HttpMethod.PUT, "/api/medicines/**").hasRole("PHARMACY_ADMIN")
-                        .pathMatchers(HttpMethod.DELETE, "/api/medicines/**").hasRole("PHARMACY_ADMIN")
-                        .pathMatchers(HttpMethod.GET, "/api/pharmacies/**").hasRole("PHARMACY_ADMIN")
+                        
+                        // 1. Pharmacy Inventory Management (Pharmacy Admin Only)
+                        .pathMatchers(HttpMethod.POST, "/api/medicines/addToPharmacy").hasRole("PHARMACY_ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/api/medicines/pharmacy/**").hasRole("PHARMACY_ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/api/medicines/pharmacy/**").hasRole("PHARMACY_ADMIN")
+                        .pathMatchers(HttpMethod.GET, "/api/medicines/pharmacy/**").hasAnyRole("PHARMACY_ADMIN", "SYSTEM_ADMIN")
+                        
+                        // 2. Global Medicine Catalog (System Admin Only)
+                        .pathMatchers(HttpMethod.POST, "/api/medicines").hasRole("SYSTEM_ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/api/medicines/{id}").hasRole("SYSTEM_ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/api/medicines/{id}").hasRole("SYSTEM_ADMIN")
+                        
+                        // 3. Pharmacy Management & Profiles
+                        .pathMatchers(HttpMethod.GET, "/api/pharmacies").hasRole("SYSTEM_ADMIN")
+                        .pathMatchers(HttpMethod.GET, "/api/pharmacies/{id}").hasAnyRole("PHARMACY_ADMIN", "SYSTEM_ADMIN")
                         .pathMatchers(HttpMethod.PUT, "/api/pharmacies/**").hasRole("PHARMACY_ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/api/pharmacies/**").hasRole("SYSTEM_ADMIN")
 
                         .pathMatchers("/api/alerts/**").permitAll()
 

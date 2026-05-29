@@ -77,4 +77,32 @@ public class PharmacyService {
 //    }
 
 
+    public PharmacyResponse update(Long id, PharmacyRegisterRequest request) {
+        Pharmacy pharmacy = pharmacyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy Not Found"));
+
+        if (request.getName() != null) pharmacy.setName(request.getName());
+        if (request.getAddress() != null) pharmacy.setAddress(request.getAddress());
+        if (request.getLatitude() != null) pharmacy.setLatitude(request.getLatitude());
+        if (request.getLongitude() != null) pharmacy.setLongitude(request.getLongitude());
+        if (request.getPhone() != null) pharmacy.setPhone(request.getPhone());
+
+        Pharmacy saved = pharmacyRepository.save(pharmacy);
+        return pharmacyMapper.toResponse(saved);
+    }
+
+    public void delete(Long id) {
+        Pharmacy pharmacy = pharmacyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy Not Found with ID: " + id));
+
+        // Delete from Keycloak
+        try {
+            keycloakService.deletePharmacyUser(pharmacy.getEmail());
+        } catch (Exception e) {
+            // Log warning but continue local DB delete
+        }
+
+        // Delete from local DB
+        pharmacyRepository.delete(pharmacy);
+    }
 }

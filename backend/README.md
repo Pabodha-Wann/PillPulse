@@ -1,99 +1,108 @@
 # PillPulse Backend
 
-Welcome to the backend for **PillPulse**! This system is built using a modern Spring Boot microservices architecture, designed for scalability, reliability, and security.
+Welcome to the backend for **PillPulse**! This system is built using a modern Spring Boot microservices architecture, designed for high scalability, fault tolerance, and secure role-based access control.
+
+---
 
 ## 🏗️ Architecture Overview
 
-The backend is composed of several independent services communicating through an API Gateway, discovered via Eureka, and secured by Keycloak. Asynchronous events (like alerts and data sync) are handled via RabbitMQ.
+The backend is composed of decoupled microservices communicating through an API Gateway, discovered dynamically via Eureka, and secured by Keycloak. Asynchronous events (like stock alerts) are broadcast securely using RabbitMQ.
 
 ```mermaid
 graph TD
-    %% Clients
-    Client([Web / Mobile Client])
-    
-    %% Core Infrastructure
-    Gateway[API Gateway<br>:8080]
-    Eureka[Eureka Discovery<br>:8761]
-    Keycloak{Keycloak Auth<br>:8180}
-    RabbitMQ((RabbitMQ<br>Event Broker))
-    
-    %% Microservices
-    Pharmacy[Pharmacy Service<br>:8081]
-    Medicine[Medicine Service<br>:8082]
-    Search[Search Service<br>:8083]
-    Alert[Alert Service<br>:8084]
-    
-    %% Databases
-    DB_Pharm[(Pharmacy DB)]
-    DB_Med[(Medicine DB)]
-    DB_Alert[(Alert DB)]
+    %% Clients & Authentication Gateway
+    Client([Client Application]) -->|1. Authenticate| Keycloak[Keycloak Auth Server]
+    Client -->|2. Routed Requests with JWT| Gateway[API Gateway]
 
-    %% Connections
-    Client -->|REST API| Gateway
-    Client -.->|Auth / Token Request| Keycloak
-    
-    Gateway -->|Routes with Auth Token| Pharmacy
-    Gateway -->|Routes with Auth Token| Medicine
-    Gateway -->|Routes| Search
-    Gateway -->|Routes| Alert
-    
-    Gateway -.->|Token Validation| Keycloak
-    Pharmacy -.->|User Registration| Keycloak
-    
-    %% DB Connections
-    Pharmacy --> DB_Pharm
-    Medicine --> DB_Med
-    Alert --> DB_Alert
-    
-    %% Async Messaging
-    Pharmacy -.->|Publish/Subscribe| RabbitMQ
-    Medicine -.->|Publish/Subscribe| RabbitMQ
-    Alert -.->|Publish/Subscribe| RabbitMQ
-    Search -.->|Publish/Subscribe| RabbitMQ
-    
-    %% Service Discovery
-    Gateway -.-> Eureka
-    Pharmacy -.-> Eureka
-    Medicine -.-> Eureka
-    Search -.-> Eureka
-    Alert -.-> Eureka
+    %% Microservices Layer
+    subgraph Microservices
+        Pharmacy[Pharmacy Service]
+        Medicine[Medicine Service]
+        Search[Search Service]
+        Alert[Alert Service]
+    end
+
+    %% Routing
+    Gateway -->|Route| Pharmacy
+    Gateway -->|Route| Medicine
+    Gateway -->|Route| Search
+    Gateway -->|Route| Alert
+
+    %% Databases
+    Pharmacy --> DB_Pharm[(Pharmacy DB)]
+    Medicine --> DB_Med[(Medicine DB)]
+    Alert --> DB_Alert[(Alert DB)]
+
+    %% Event Bus & Registry
+    Registry[Eureka Service Registry] -.->|Discovery| Gateway
+    EventBus[RabbitMQ Event Broker] -.->|Async Alerts| Alert
 ```
 
-## 🚀 Services
+---
 
-| Service | Port | Description |
-|---|---|---|
-| **API Gateway** | `8080` | The single entry point for all clients. Routes requests and validates JWT tokens. |
-| **Eureka Server** | `8761` | Service Registry. All microservices register themselves here for load balancing and discovery. |
-| **Pharmacy Service** | `8081` | Manages pharmacy registrations and profiles. Connects to Keycloak to provision user identities. |
-| **Medicine Service** | `8082` | Manages drug inventories for pharmacies. |
-| **Search Service** | `8083` | Handles fast querying and filtering of medicines and pharmacies across the system. |
-| **Alert Service** | `8084` | Manages notifications, such as low stock alerts or system notifications. |
+## Services & Ports
 
-## 🛠️ Tech Stack
-- **Framework**: Spring Boot 3.x, Spring Cloud
-- **Security**: Keycloak (OAuth2 / OpenID Connect)
-- **Database**: PostgreSQL
-- **Message Broker**: RabbitMQ
-- **Deployment**: Docker & Docker Compose
+| Service | Port | Description | Database |
+|---|---|---|---|
+| **API Gateway** | `8080` | Entry point for all clients. Handles global CORS, routes requests, and validates JWT tokens. | *None* |
+| **Eureka Server** | `8761` | Service Registry. Handles microservice discovery and load balancing. | *None* |
+| **Pharmacy Service** | `8081` | Handles registrations, profile updates, and Keycloak user provisioning. | `pharmacy_db` (PostgreSQL) |
+| **Medicine Service** | `8082` | Manages global drug data and local pharmacy stock inventories. | `medicine_db` (PostgreSQL) |
+| **Search Service** | `8083` | Computes nearest pharmacies using the Haversine formula based on geolocation. | *None* (Integrates Feign) |
+| **Alert Service** | `8084` | Manages stock alert subscriptions and notification histories. | `alert_db` (PostgreSQL) |
 
-## 🐳 Running the Project
+---
 
-The easiest way to start the entire backend (including databases, message brokers, and Keycloak) is via Docker Compose.
+## Security & Role-Based Access Control (RBAC)
 
-1. Navigate to the `backend` directory.
-2. Build the project using Maven:
+PillPulse implements a highly secure, fine-grained access control layer at the API Gateway using Keycloak OAuth2 / OpenID Connect. The gateway extracts nested roles from the JWT (`realm_access.roles`) and enforces authorization rules:
+
+### SYSTEM_ADMIN
+Platform managers responsible for global data integrity and store audits.
+* **Global Catalog Management**: Can create, edit, or delete drugs in the global master catalog (`POST/PUT/DELETE /api/medicines/**`).
+* **Pharmacy Supervision**: Can view all registered pharmacies (`GET /api/pharmacies`) and delete/suspend stores from the platform (`DELETE /api/pharmacies/{id}`).
+
+### PHARMACY_ADMIN
+Store owners or authorized staff managing their own inventories and profiles.
+* **Local Inventory Management**: Can add drugs to their local stock (`POST /api/medicines/addToPharmacy`) and update or remove inventory (`PUT/DELETE /api/medicines/pharmacy/**`).
+* **Profile Management**: Can view (`GET /api/pharmacies/{id}`) and update (`PUT /api/pharmacies/{id}`) their own pharmacy details.
+
+---
+
+## Core API Endpoints
+
+### Authentication & Profiles
+* `POST /api/auth/login` - Authenticate pharmacy credentials and return an enriched profile payload containing the JWT token.
+* `POST /api/pharmacies/register` - Register a new pharmacy account and provision a Keycloak identity.
+* `GET /api/pharmacies` - Retrieve all pharmacies *(Requires SYSTEM_ADMIN)*.
+* `GET /api/pharmacies/{id}` - Retrieve a pharmacy's detailed profile.
+* `PUT /api/pharmacies/{id}` - Update pharmacy profile details *(Requires PHARMACY_ADMIN)*.
+* `DELETE /api/pharmacies/{id}` - Delete a pharmacy profile and revoke Keycloak access *(Requires SYSTEM_ADMIN)*.
+
+### Global Catalog & Local Inventory
+* `POST /api/medicines` - Create a new medicine definition globally *(Requires SYSTEM_ADMIN)*.
+* `PUT /api/medicines/{id}` - Update a global medicine definition *(Requires SYSTEM_ADMIN)*.
+* `DELETE /api/medicines/{id}` - Remove a global medicine definition *(Requires SYSTEM_ADMIN)*.
+* `POST /api/medicines/addToPharmacy` - Add a medicine to a pharmacy's stock *(Requires PHARMACY_ADMIN)*.
+* `PUT /api/medicines/pharmacy/{pharmacyId}/medicine/{medicineId}` - Update local stock quantity or price *(Requires PHARMACY_ADMIN)*.
+* `DELETE /api/medicines/pharmacy/{pharmacyId}/medicine/{medicineId}` - Remove a medicine from a pharmacy's inventory *(Requires PHARMACY_ADMIN)*.
+
+---
+
+## Getting Started
+
+### Prerequisites
+* Java 21 & Maven 3.x
+* Docker & Docker Compose
+* Keycloak 23.0.0
+
+### Running the Stack
+1. Compile the microservices:
    ```bash
    mvn clean package -DskipTests
    ```
-3. Start the Docker containers:
+2. Start the infrastructure and database containers:
    ```bash
    docker-compose up -d --build
    ```
-4. **Keycloak Setup (First Run)**: Access Keycloak at `http://localhost:8180` and ensure your `pillpulse` realm, clients, and roles (e.g., `PHARMACY_ADMIN`) are configured.
-
-## 🔐 Authentication Flow
-1. The client requests a token from **Keycloak**.
-2. Keycloak validates the credentials and returns a JWT.
-3. The client attaches the JWT as a `Bearer` token in the `Authorization` header.
-4. The **API Gateway** validates the token signature and extracts nested roles (e.g., `realm_access.roles`) to authorize access to protected endpoints.
+3. Import your Keycloak realm configuration using the Admin Console at `http://localhost:8180` (credentials: `admin` / `admin`).
