@@ -18,6 +18,12 @@ export const alertService = {
         return response.data;
     },
 
+    // Get all active/global subscriptions for admin dashboard
+    getAllSubscriptions: async (): Promise<AlertSubscription[]> => {
+        const response = await axiosInstance.get('/api/alerts/subscriptions');
+        return response.data;
+    },
+
     // Unsubscribe from alerts for a medicine
     unsubscribe: async (email: string, medicineId: number): Promise<void> => {
         await axiosInstance.delete(`/api/alerts/unsubscribe/${email}/medicine/${medicineId}`);

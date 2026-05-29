@@ -45,22 +45,38 @@ public class AlertService {
             );
         }
 
-        Optional<AlertSubscription> existing = alertSubscriptionRepository
-                .findByUserEmailAndMedicineId(request.getUserEmail(),request.getMedicineId());
+        // 1. Check if email already has an active subscription for this medicine
+        boolean emailExists = alertSubscriptionRepository
+                .existsByUserEmailAndMedicineIdAndIsActiveTrue(request.getUserEmail(), request.getMedicineId());
+        if (emailExists) {
+            throw new DuplicateResourceException("Already subscribed to this medicine with this email address.");
+        }
 
-        if(existing.isPresent()){
-            if(existing.get().getIsActive()){
-                    throw new DuplicateResourceException(
-                            "Already subscribe to this medicine"
-                    );
-            }else {
-                //if previuosly unsubscribed -> reactive again
-                AlertSubscription reactivated = existing.get();
-                reactivated.setIsActive(true);
-                reactivated.setUserPhone(request.getUserPhone());
-                AlertSubscription saved = alertSubscriptionRepository.save(reactivated);
-                return alertSubscriptionMapper.toResponse(saved);
+        // 2. Check if phone already has an active subscription for this medicine
+        if (request.getUserPhone() != null && !request.getUserPhone().trim().isEmpty()) {
+            boolean phoneExists = alertSubscriptionRepository
+                    .existsByUserPhoneAndMedicineIdAndIsActiveTrue(request.getUserPhone().trim(), request.getMedicineId());
+            if (phoneExists) {
+                throw new DuplicateResourceException("Already subscribed to this medicine with this phone number.");
             }
+        }
+
+        Optional<AlertSubscription> existing = alertSubscriptionRepository
+                .findByUserEmailAndMedicineId(request.getUserEmail(), request.getMedicineId());
+
+        if (existing.isEmpty() && request.getUserPhone() != null && !request.getUserPhone().trim().isEmpty()) {
+            existing = alertSubscriptionRepository
+                    .findByUserPhoneAndMedicineId(request.getUserPhone().trim(), request.getMedicineId());
+        }
+
+        if (existing.isPresent()) {
+            // Because we checked active ones above, this existing one is currently inactive -> reactivate it
+            AlertSubscription reactivated = existing.get();
+            reactivated.setIsActive(true);
+            reactivated.setUserEmail(request.getUserEmail());
+            reactivated.setUserPhone(request.getUserPhone());
+            AlertSubscription saved = alertSubscriptionRepository.save(reactivated);
+            return alertSubscriptionMapper.toResponse(saved);
         }
 
         AlertSubscription alertSubscription = alertSubscriptionMapper.toEntity(request);
@@ -70,6 +86,12 @@ public class AlertService {
 
     }
 
+
+    public List<AlertSubscriptionResponse> getAllSubscriptions() {
+        return alertSubscriptionRepository.findAll().stream()
+                .map(alertSubscriptionMapper::toResponse)
+                .collect(Collectors.toList());
+    }
 
     public List<AlertSubscriptionResponse> getUserSubscriptions(
             String userEmail

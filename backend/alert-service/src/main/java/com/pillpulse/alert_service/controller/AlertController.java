@@ -27,6 +27,11 @@ public class AlertController {
                 .body(alertService.subscribe(request));
     }
 
+    @GetMapping("/subscriptions")
+    public ResponseEntity<List<AlertSubscriptionResponse>> getAllSubscriptions(){
+        return ResponseEntity.ok(alertService.getAllSubscriptions());
+    }
+
     @GetMapping("/subscriptions/{email}")
     public ResponseEntity<List<AlertSubscriptionResponse>> getUserSubscriptions(
             @PathVariable String email

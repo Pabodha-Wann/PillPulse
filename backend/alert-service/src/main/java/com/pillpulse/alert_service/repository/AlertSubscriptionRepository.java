@@ -13,10 +13,16 @@ public interface AlertSubscriptionRepository extends JpaRepository<AlertSubscrip
     //check is user subscribe to the medicine
     boolean existsByUserEmailAndMedicineId(String UserEmail,Long MedicineId);
 
+    boolean existsByUserEmailAndMedicineIdAndIsActiveTrue(String userEmail, Long medicineId);
+
+    boolean existsByUserPhoneAndMedicineIdAndIsActiveTrue(String userPhone, Long medicineId);
+
     //Get all subscription for a user
     List<AlertSubscription> findByUserEmail(String useEmail);
 
     Optional<AlertSubscription> findByUserEmailAndMedicineId(String userEmail, Long medicineId);
+
+    Optional<AlertSubscription> findByUserPhoneAndMedicineId(String userPhone, Long medicineId);
 
     List<AlertSubscription> findByMedicineIdAndIsActiveTrue(Long medicineId);
 }
