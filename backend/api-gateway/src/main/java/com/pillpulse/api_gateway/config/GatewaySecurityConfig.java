@@ -29,7 +29,7 @@ public class GatewaySecurityConfig {
 
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Ensure OPTIONS is allowed everywhere
                         .pathMatchers(HttpMethod.POST, "/api/pharmacies/register").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/search/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/medicines/{id}").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/medicines").permitAll()

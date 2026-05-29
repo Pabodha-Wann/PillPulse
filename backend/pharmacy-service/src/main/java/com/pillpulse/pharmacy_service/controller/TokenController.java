@@ -100,4 +100,41 @@ public class TokenController {
             throw new RuntimeException(e.getMessage());
         }
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> request) {
+        try {
+            String refreshToken = request.get("refresh_token");
+            if (refreshToken == null || refreshToken.isEmpty()) {
+                throw new RuntimeException("Refresh token is required");
+            }
+
+            String tokenUrl = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/token";
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("grant_type", "refresh_token");
+            body.add("client_id", clientId);
+            body.add("client_secret", clientSecret);
+            body.add("refresh_token", refreshToken);
+
+            log.info("🔑 Attempting token refresh");
+
+            Map<?, ?> tokenResponse = restTemplate.postForObject(
+                    tokenUrl,
+                    body,
+                    Map.class
+            );
+
+            Map<String, Object> enrichedResponse = new HashMap<>();
+            enrichedResponse.put("access_token", tokenResponse.get("access_token"));
+            enrichedResponse.put("refresh_token", tokenResponse.get("refresh_token"));
+            enrichedResponse.put("expires_in", tokenResponse.get("expires_in"));
+
+            return ResponseEntity.ok(enrichedResponse);
+
+        } catch (Exception e) {
+            log.error("❌ Token refresh error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired refresh token"));
+        }
+    }
 }

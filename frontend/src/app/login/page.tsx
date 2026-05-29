@@ -39,10 +39,11 @@ export default function LoginPage() {
             const response = await authService.loginPharmacy(credentials.email, credentials.password)
 
             const accesstoken = response.access_token
+            const refreshToken = response.refresh_token
             const pharmacy = response.user
 
             // Save token and user to Zustand store
-            setAuth(pharmacy, accesstoken)
+            setAuth(pharmacy, accesstoken, refreshToken)
 
             toast.success('Login successful!')
             router.push('/dashboard')
