@@ -22,7 +22,8 @@ export default function GlobalMedicinesPage() {
         genericName: '',
         category: '',
         description: '',
-        manufacturer: ''
+        manufacturer: '',
+        atcCode: ''
     })
 
     useEffect(() => {
@@ -69,7 +70,8 @@ export default function GlobalMedicinesPage() {
             genericName: '',
             category: '',
             description: '',
-            manufacturer: ''
+            manufacturer: '',
+            atcCode: ''
         })
         setShowForm(true)
     }
@@ -82,7 +84,8 @@ export default function GlobalMedicinesPage() {
             genericName: medicine.genericName,
             category: medicine.category,
             description: medicine.description,
-            manufacturer: medicine.manufacturer
+            manufacturer: medicine.manufacturer,
+            atcCode: medicine.atcCode || ''
         })
         setShowForm(true)
     }
@@ -90,8 +93,8 @@ export default function GlobalMedicinesPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!formData.name || !formData.genericName || !formData.category) {
-            toast.error('Please fill required fields (Name, Generic Name, Category)')
+        if (!formData.name || !formData.genericName || !formData.category || !formData.atcCode) {
+            toast.error('Please fill required fields (Name, Generic Name, Category, ATC Code)')
             return
         }
 
@@ -225,6 +228,20 @@ export default function GlobalMedicinesPage() {
                                 />
                             </div>
 
+                            {/* ATC Code */}
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">ATC Code *</label>
+                                <input
+                                    type="text"
+                                    name="atcCode"
+                                    value={formData.atcCode}
+                                    onChange={handleChange}
+                                    placeholder="e.g. N02BE01"
+                                    className="w-full border border-slate-200 p-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#173822] focus:border-transparent bg-slate-50 transition-all text-slate-900 font-medium"
+                                    required
+                                />
+                            </div>
+
                             {/* Description */}
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-semibold text-slate-700 mb-2">Product Description & Usage Guidelines</label>
@@ -285,8 +302,9 @@ export default function GlobalMedicinesPage() {
                                     <p className="text-sm font-semibold text-[#173822] mb-2">{med.genericName}</p>
                                     <p className="text-sm text-slate-500 leading-relaxed line-clamp-2 max-w-3xl mb-3">{med.description || 'No description provided.'}</p>
                                     
-                                    <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                                        Manufacturer: <span className="text-slate-600 font-bold">{med.manufacturer || 'Unknown'}</span>
+                                    <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider flex flex-wrap items-center gap-x-6 gap-y-1">
+                                        <span>Manufacturer: <span className="text-slate-600 font-bold">{med.manufacturer || 'Unknown'}</span></span>
+                                        <span>ATC Code: <span className="text-[#173822] font-extrabold">{med.atcCode || 'N/A'}</span></span>
                                     </div>
                                 </div>
 

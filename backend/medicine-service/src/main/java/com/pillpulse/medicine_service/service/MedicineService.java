@@ -39,15 +39,17 @@ public class MedicineService {
     private final StockEventPublisher stockEventPublisher;
 
     public MedicineResponse createMedicine(MedicineRequest medicineRequest){
-        if(medicineRepository.existsByName(medicineRequest.getName())){
-            throw new RuntimeException("Medicine already exists: " + medicineRequest.getName());
+        String trimmedName = medicineRequest.getName() != null ? medicineRequest.getName().trim() : "";
+        String trimmedAtc = medicineRequest.getAtcCode() != null ? medicineRequest.getAtcCode().trim() : "";
+
+        if (medicineRepository.existsByNameIgnoreCaseAndAtcCodeIgnoreCase(trimmedName, trimmedAtc)) {
+            throw new RuntimeException("Medicine brand with this ATC code already exists: " + trimmedName + " (" + trimmedAtc + ")");
         }
 
         Medicine medicine = medicineMapper.toEntity(medicineRequest);
         Medicine saved = medicineRepository.save(medicine);
 
         return medicineMapper.toResponse(saved);
-
     }
 
 
@@ -71,6 +73,16 @@ public class MedicineService {
                 () -> new RuntimeException("Medicine not found with id: " + id)
         );
 
+        String trimmedName = medicineRequest.getName() != null ? medicineRequest.getName().trim() : "";
+        String trimmedAtc = medicineRequest.getAtcCode() != null ? medicineRequest.getAtcCode().trim() : "";
+
+        boolean nameChanged = !medicine.getName().equalsIgnoreCase(trimmedName);
+        boolean atcChanged = medicine.getAtcCode() == null || !medicine.getAtcCode().equalsIgnoreCase(trimmedAtc);
+
+        if ((nameChanged || atcChanged) && medicineRepository.existsByNameIgnoreCaseAndAtcCodeIgnoreCase(trimmedName, trimmedAtc)) {
+            throw new RuntimeException("Medicine brand with this ATC code already exists: " + trimmedName + " (" + trimmedAtc + ")");
+        }
+
         Medicine updated = Medicine.builder()
                 .id(medicine.getId())
                 .name(medicineRequest.getName())
@@ -78,6 +90,7 @@ public class MedicineService {
                 .category(medicineRequest.getCategory())
                 .description(medicineRequest.getDescription())
                 .manufacturer(medicineRequest.getManufacturer())
+                .atcCode(medicineRequest.getAtcCode())
                 .createdAt(medicine.getCreatedAt())
                 .updatedAt(medicine.getUpdatedAt())
                 .build();

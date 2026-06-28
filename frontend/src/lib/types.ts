@@ -17,6 +17,7 @@ export interface Medicine {
     category: string
     description: string
     manufacturer: string
+    atcCode?: string
 }
 
 export interface PharmacyMedicine {

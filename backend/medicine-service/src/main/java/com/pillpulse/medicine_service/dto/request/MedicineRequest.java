@@ -9,4 +9,5 @@ public class MedicineRequest {
     private String category;
     private String description;
     private String manufacturer;
+    private String atcCode;
 }

@@ -18,5 +18,6 @@ public class MedicineResponse {
     private String category;
     private String description;
     private String manufacturer;
+    private String atcCode;
     private LocalDateTime createdAt;
 }

@@ -9,6 +9,8 @@ import java.util.Optional;
 @Repository
 public interface MedicineRepository extends JpaRepository<Medicine,Long> {
     boolean existsByName(String name);
+    boolean existsByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCaseAndAtcCodeIgnoreCase(String name, String atcCode);
 
     //find medicine by name
     Optional<Medicine> findByNameIgnoreCase(String name);

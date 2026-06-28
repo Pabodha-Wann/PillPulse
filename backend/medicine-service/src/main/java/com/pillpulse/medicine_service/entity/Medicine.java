@@ -30,6 +30,9 @@ public class Medicine {
     private String description;
     private String manufacturer;
 
+    @Column(name = "atc_code")
+    private String atcCode;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
