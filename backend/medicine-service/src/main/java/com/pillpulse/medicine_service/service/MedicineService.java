@@ -224,7 +224,7 @@ public class MedicineService {
     public List<PharmacyMedicineSearchResponse> searchPharmaciesWithMedicine(
             String medicineName
     ){
-        return pharmacyMedicineRepository.findByMedicine_NameIgnoreCaseAndStatus(
+        return pharmacyMedicineRepository.findByMedicine_NameContainingIgnoreCaseAndStatus(
                 medicineName, StockStatus.IN_STOCK
         )
                 .stream()

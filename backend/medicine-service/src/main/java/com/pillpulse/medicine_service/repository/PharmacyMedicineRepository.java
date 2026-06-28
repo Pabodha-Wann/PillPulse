@@ -21,5 +21,5 @@ public interface PharmacyMedicineRepository extends JpaRepository<PharmacyMedici
     List<PharmacyMedicine> findByMedicineIdAndStatus(Long medicineId, StockStatus stockStatus);
 
     //find pharmacies with a particular medicine in stock
-    List<PharmacyMedicine> findByMedicine_NameIgnoreCaseAndStatus(String medicineName,StockStatus status);
+    List<PharmacyMedicine> findByMedicine_NameContainingIgnoreCaseAndStatus(String medicineName,StockStatus status);
 }

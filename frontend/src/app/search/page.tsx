@@ -96,8 +96,13 @@ export default function SearchPage() {
                 toast.success(`Found ${data.length} pharmacies nearby!`)
             }
         } catch (error: any) {
-            toast.error(error.message || 'Search failed')
-            console.error('Search error:', error)
+            if (error.response && error.response.status === 404) {
+                setResults([])
+                toast.info('No pharmacies found with this medicine inside search radius.')
+            } else {
+                toast.error(error.response?.data?.message || error.message || 'Search failed')
+                console.error('Search error:', error)
+            }
         } finally {
             setLoading(false)
         }
@@ -105,7 +110,7 @@ export default function SearchPage() {
 
     const selectPharmacy = (pharmacy: SearchResult) => {
         setSelectedPharmacyId(pharmacy.pharmacyId)
-        
+
         // Scroll list to card
         const cardElement = cardRefs.current[pharmacy.pharmacyId]
         if (cardElement) {
@@ -151,10 +156,10 @@ export default function SearchPage() {
 
     return (
         <div className="flex flex-col lg:flex-row h-screen w-full overflow-hidden pt-[104px]" style={{ fontFamily: 'var(--font-outfit)' }}>
-            
+
             {/* Left Column: Search & Results List */}
             <div className="w-full lg:w-[42%] flex flex-col h-full bg-slate-50 border-r border-slate-200 z-10">
-                
+
                 {/* Header & Search Form */}
                 <div className="p-6 md:p-8 bg-white border-b border-slate-100 shadow-sm">
                     <div className="mb-6">
@@ -164,7 +169,7 @@ export default function SearchPage() {
                             </svg>
                             <span>Back to home</span>
                         </Link>
-                        
+
                         <div className="flex items-center gap-2">
                             <svg className="w-6 h-6 text-[#173822]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637z" />
@@ -258,11 +263,10 @@ export default function SearchPage() {
                                     key={pharmacy.pharmacyId}
                                     ref={(el) => { cardRefs.current[pharmacy.pharmacyId] = el }}
                                     onClick={() => selectPharmacy(pharmacy)}
-                                    className={`p-5 bg-white rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between ${
-                                        selectedPharmacyId === pharmacy.pharmacyId
+                                    className={`p-5 bg-white rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between ${selectedPharmacyId === pharmacy.pharmacyId
                                             ? 'border-[#173822] ring-4 ring-[#173822]/5 shadow-md transform -translate-y-0.5'
                                             : 'border-slate-200/80 hover:border-slate-300 hover:shadow-md'
-                                    }`}
+                                        }`}
                                 >
                                     <div>
                                         <div className="flex justify-between items-start mb-2 gap-2">
@@ -303,13 +307,12 @@ export default function SearchPage() {
                                             </div>
                                             <div>
                                                 <span
-                                                    className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${
-                                                        pharmacy.status === 'IN_STOCK'
+                                                    className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${pharmacy.status === 'IN_STOCK'
                                                             ? 'bg-emerald-50 text-emerald-600'
                                                             : pharmacy.status === 'LOW_STOCK'
                                                                 ? 'bg-amber-50 text-amber-600'
                                                                 : 'bg-rose-50 text-rose-600'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {pharmacy.status === 'IN_STOCK' ? 'In Stock' : pharmacy.status === 'LOW_STOCK' ? 'Low Stock' : 'Out of Stock'}
                                                 </span>
@@ -318,7 +321,7 @@ export default function SearchPage() {
                                     </div>
 
                                     {/* Action Button */}
-                                    <button 
+                                    <button
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             setSelectedMedId(pharmacy.medicineId)
