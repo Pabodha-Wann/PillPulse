@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const isActive = (path: string) => pathname === path
 
     return (
-        <div className="flex bg-[#fafafa] h-screen pt-28 overflow-hidden" style={{ fontFamily: 'var(--font-outfit)' }}>
+        <div className="flex bg-[#fafafa] h-screen overflow-hidden" style={{ fontFamily: 'var(--font-outfit)' }}>
             {/* Sidebar */}
             <aside 
                 className={`${isSidebarOpen ? 'w-64' : 'w-20'} h-full bg-[#fafafa] border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out shrink-0`}

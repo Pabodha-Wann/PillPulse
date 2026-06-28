@@ -155,7 +155,7 @@ export default function SearchPage() {
     }
 
     return (
-        <div className="flex flex-col lg:flex-row h-screen w-full overflow-hidden pt-[104px]" style={{ fontFamily: 'var(--font-outfit)' }}>
+        <div className="flex flex-col lg:flex-row h-screen w-full overflow-hidden" style={{ fontFamily: 'var(--font-outfit)' }}>
 
             {/* Left Column: Search & Results List */}
             <div className="w-full lg:w-[42%] flex flex-col h-full bg-slate-50 border-r border-slate-200 z-10">
