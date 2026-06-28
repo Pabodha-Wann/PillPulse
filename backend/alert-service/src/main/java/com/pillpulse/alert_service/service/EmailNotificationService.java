@@ -13,19 +13,19 @@ public class EmailNotificationService {
 
     private final JavaMailSender mailSender;
 
-    public void sendSubscriptionConfirmationEmail(String toEmail, String medicineName) {
+    public void sendSubscriptionConfirmationEmail(String toEmail, String medicineName, String pharmacyName) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(toEmail);
-            message.setSubject("💊 PillPulse Alert Activated: " + medicineName);
+            message.setSubject("💊 PillPulse Alert Activated: " + medicineName + " at " + (pharmacyName != null ? pharmacyName : "selected pharmacy"));
             
             String text = String.format(
                     "Hello,\n\n" +
-                    "You have successfully subscribed to stock alerts for: %s.\n" +
+                    "You have successfully subscribed to stock alerts for: %s at %s.\n" +
                     "We will notify you immediately via email and SMS as soon as this medicine " +
-                    "is restocked at any of our partner pharmacies.\n\n" +
+                    "is restocked at this pharmacy.\n\n" +
                     "Thank you for choosing PillPulse.",
-                    medicineName
+                    medicineName, (pharmacyName != null ? pharmacyName : "your selected pharmacy")
             );
             message.setText(text);
             mailSender.send(message);

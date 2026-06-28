@@ -80,7 +80,7 @@ public class AlertService {
             AlertSubscription saved = alertSubscriptionRepository.save(reactivated);
 
             // Send subscription confirmation email
-            emailNotificationService.sendSubscriptionConfirmationEmail(saved.getUserEmail(), saved.getMedicineName());
+            emailNotificationService.sendSubscriptionConfirmationEmail(saved.getUserEmail(), saved.getMedicineName(), saved.getPharmacyName());
 
             // Log subscription confirmation to alert history logs
             alertHistoryRepository.save(AlertHistory.builder()
@@ -99,7 +99,7 @@ public class AlertService {
         AlertSubscription saved = alertSubscriptionRepository.save(alertSubscription);
 
         // Send subscription confirmation email
-        emailNotificationService.sendSubscriptionConfirmationEmail(saved.getUserEmail(), saved.getMedicineName());
+        emailNotificationService.sendSubscriptionConfirmationEmail(saved.getUserEmail(), saved.getMedicineName(), saved.getPharmacyName());
 
         // Log subscription confirmation to alert history logs
         alertHistoryRepository.save(AlertHistory.builder()

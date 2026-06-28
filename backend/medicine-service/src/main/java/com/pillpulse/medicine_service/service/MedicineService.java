@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -100,7 +101,14 @@ public class MedicineService {
             PharmacyMedicineRequest pharmacyMedicineRequest
     ){
         //check pharmacy exists using webclient
-       pharmacyServiceClient.verifyPharmacyExists(pharmacyMedicineRequest.getPharmacyId());
+        pharmacyServiceClient.verifyPharmacyExists(pharmacyMedicineRequest.getPharmacyId());
+
+        if (pharmacyMedicineRequest.getQuantityInStock() != null && pharmacyMedicineRequest.getQuantityInStock() < 0) {
+            throw new IllegalArgumentException("Quantity in stock cannot be negative");
+        }
+        if (pharmacyMedicineRequest.getPrice() != null && pharmacyMedicineRequest.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Price cannot be negative");
+        }
 
         Medicine medicine = medicineRepository.findById(pharmacyMedicineRequest.getMedicineId())
                 .orElseThrow(()-> new RuntimeException(
@@ -161,6 +169,13 @@ public class MedicineService {
                 .orElseThrow(() -> new RuntimeException(
                     "Medicine not found in this pharmacy"
                 ));
+
+        if (request.getQuantityInStock() != null && request.getQuantityInStock() < 0) {
+            throw new IllegalArgumentException("Quantity in stock cannot be negative");
+        }
+        if (request.getPrice() != null && request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Price cannot be negative");
+        }
 
         int oldQuantity = existing.getQuantityInStock();
         int newQuantity = request.getQuantityInStock();
