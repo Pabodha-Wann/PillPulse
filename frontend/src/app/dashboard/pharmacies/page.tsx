@@ -154,6 +154,17 @@ export default function PharmaciesPage() {
         }
     }
 
+    const handleVerify = async (id: number) => {
+        try {
+            await pharmacyService.verifyPharmacy(id)
+            toast.success('Pharmacy verified and login access activated successfully!')
+            await loadPharmacies()
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to verify pharmacy')
+            console.error(error)
+        }
+    }
+
     if (loading && pharmacies.length === 0) {
         return (
             <div className="flex h-screen items-center justify-center bg-slate-50">
@@ -338,9 +349,15 @@ export default function PharmaciesPage() {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-1">
                                         <h3 className="font-semibold text-lg text-slate-900">{pharm.name}</h3>
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#e8f3d6] text-[#173822] uppercase tracking-wider">
-                                            Partner
-                                        </span>
+                                        {pharm.isVerified ? (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#e8f3d6] text-[#173822] uppercase tracking-wider">
+                                                Verified
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 uppercase tracking-wider">
+                                                Pending Verification
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-sm text-slate-500 font-medium mb-3">{pharm.address}</p>
                                     
@@ -365,6 +382,18 @@ export default function PharmaciesPage() {
                                 </div>
 
                                 <div className="flex items-center gap-3 border-t md:border-t-0 pt-4 md:pt-0 shrink-0">
+                                    {!pharm.isVerified && (
+                                        <button
+                                            onClick={() => handleVerify(pharm.id)}
+                                            className="bg-[#173822] hover:bg-[#204a2d] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                                            title="Verify and Activate login"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Verify
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => handleOpenEdit(pharm)}
                                         className="p-2 text-slate-600 hover:text-[#173822] hover:bg-slate-100 rounded-lg transition-all"

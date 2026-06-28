@@ -36,6 +36,10 @@ public class Pharmacy {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "is_verified", nullable = false)
+    @Builder.Default
+    private Boolean isVerified = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -46,6 +50,9 @@ public class Pharmacy {
     protected void onCreate(){
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (isVerified == null) {
+            isVerified = false;
+        }
     }
 
     @PreUpdate

@@ -105,4 +105,17 @@ public class PharmacyService {
         // Delete from local DB
         pharmacyRepository.delete(pharmacy);
     }
+
+    public PharmacyResponse verifyPharmacy(Long id) {
+        Pharmacy pharmacy = pharmacyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy Not Found with ID: " + id));
+
+        pharmacy.setIsVerified(true);
+        Pharmacy saved = pharmacyRepository.save(pharmacy);
+
+        // Enable user inside Keycloak
+        keycloakService.enableKeycloakUser(pharmacy.getEmail());
+
+        return pharmacyMapper.toResponse(saved);
+    }
 }

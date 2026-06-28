@@ -57,4 +57,8 @@ public class PharmacyController {
 //        return ResponseEntity.ok(token);
 //    }
 
+    @PutMapping("/{id}/verify")
+    public ResponseEntity<PharmacyResponse> verifyPharmacy(@PathVariable Long id) {
+        return ResponseEntity.ok(pharmacyService.verifyPharmacy(id));
+    }
 }

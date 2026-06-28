@@ -56,6 +56,12 @@ public class TokenController {
                 throw new RuntimeException("Password is required");
             }
 
+            // Check verification status in DB first
+            var pharmacyOpt = pharmacyRepository.findByEmail(request.getEmail());
+            if (pharmacyOpt.isPresent() && !pharmacyOpt.get().getIsVerified()) {
+                throw new RuntimeException("Your pharmacy account is pending admin verification. Please contact support at admin@pillpulse.com to activate your account.");
+            }
+
             String tokenUrl = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/token";
 
             // Build request body

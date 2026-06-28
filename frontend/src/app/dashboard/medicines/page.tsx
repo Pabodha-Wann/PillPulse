@@ -194,6 +194,7 @@ export default function MedicinesPage() {
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Quantity</label>
                                 <input
                                     type="number"
+                                    min="0"
                                     value={quantity}
                                     onChange={(e) => setQuantity(e.target.value)}
                                     placeholder="e.g. 100"
@@ -209,6 +210,7 @@ export default function MedicinesPage() {
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">Rs.</span>
                                     <input
                                         type="number"
+                                        min="0"
                                         value={price}
                                         onChange={(e) => setPrice(e.target.value)}
                                         placeholder="0.00"
@@ -283,6 +285,7 @@ export default function MedicinesPage() {
                                         <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider hidden md:block">Qty:</label>
                                         <input
                                             type="number"
+                                            min="0"
                                             placeholder="New qty"
                                             onBlur={(e) => {
                                                 if (e.target.value) {
@@ -299,6 +302,7 @@ export default function MedicinesPage() {
                                         <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider hidden md:block">Price:</label>
                                         <input
                                             type="number"
+                                            min="0"
                                             step="0.01"
                                             placeholder="New price"
                                             onBlur={(e) => {

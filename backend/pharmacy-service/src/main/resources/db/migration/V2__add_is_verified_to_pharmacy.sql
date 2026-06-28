@@ -1,0 +1,1 @@
+ALTER TABLE pharmacies ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;

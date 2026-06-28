@@ -49,7 +49,7 @@ public class KeycloakService {
 
         //define user profile
         UserRepresentation user = new UserRepresentation();
-        user.setEnabled(true);
+        user.setEnabled(false); // Disabled initially until verified by Admin
         user.setUsername(request.getEmail());
         user.setEmail(request.getEmail());
         user.setFirstName(request.getName());
@@ -134,6 +134,24 @@ public class KeycloakService {
                     .users()
                     .delete(users.get(0).getId());
             log.info("Deleted Keycloak user:{}",email);
+        }
+    }
+
+    public void enableKeycloakUser(String email) {
+        Keycloak keycloak = getKeycloakInstance();
+        List<UserRepresentation> users = keycloak.realm(realm)
+                .users()
+                .searchByEmail(email, true);
+        if (!users.isEmpty()) {
+            UserRepresentation user = users.get(0);
+            user.setEnabled(true);
+            keycloak.realm(realm)
+                    .users()
+                    .get(user.getId())
+                    .update(user);
+            log.info("Successfully enabled Keycloak user in authentication realm: {}", email);
+        } else {
+            throw new RuntimeException("Keycloak user not found with email: " + email);
         }
     }
 }

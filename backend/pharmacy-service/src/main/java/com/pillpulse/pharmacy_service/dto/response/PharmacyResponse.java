@@ -20,6 +20,7 @@ public class PharmacyResponse {
     private BigDecimal longitude;
     private String phone;
     private String email;
+    private Boolean isVerified;
     private LocalDateTime createdAt;
 
 }

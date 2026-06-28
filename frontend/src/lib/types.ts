@@ -6,6 +6,7 @@ export interface Pharmacy {
     latitude: number
     longitude: number
     phone: string
+    isVerified: boolean
     createdAt: string
 }
 

@@ -37,5 +37,11 @@ export const pharmacyService = {
     // Delete or suspend pharmacy
     deletePharmacy: async (id: number): Promise<void> => {
         await axiosInstance.delete(`/api/pharmacies/${id}`);
+    },
+
+    // Verify a pharmacy
+    verifyPharmacy: async (id: number): Promise<Pharmacy> => {
+        const response = await axiosInstance.put(`/api/pharmacies/${id}/verify`);
+        return response.data;
     }
 };
