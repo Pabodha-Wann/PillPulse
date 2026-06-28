@@ -39,12 +39,13 @@ public class AlertController {
         return ResponseEntity.ok(alertService.getUserSubscriptions(email));
     }
 
-    @DeleteMapping("/unsubscribe/{email}/medicine/{medicineId}")
+    @DeleteMapping("/unsubscribe/{email}/medicine/{medicineId}/pharmacy/{pharmacyId}")
     public ResponseEntity<Void> unsubscribe(
             @PathVariable String email,
-            @PathVariable Long medicineId
+            @PathVariable Long medicineId,
+            @PathVariable Long pharmacyId
     ){
-        alertService.unsubscribe(email,medicineId);
+        alertService.unsubscribe(email, medicineId, pharmacyId);
         return ResponseEntity.noContent().build();
     }
 

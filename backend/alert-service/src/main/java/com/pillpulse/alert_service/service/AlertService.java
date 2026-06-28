@@ -46,28 +46,28 @@ public class AlertService {
             );
         }
 
-        // 1. Check if email already has an active subscription for this medicine
+        // 1. Check if email already has an active subscription for this medicine at this pharmacy
         boolean emailExists = alertSubscriptionRepository
-                .existsByUserEmailAndMedicineIdAndIsActiveTrue(request.getUserEmail(), request.getMedicineId());
+                .existsByUserEmailAndMedicineIdAndPharmacyIdAndIsActiveTrue(request.getUserEmail(), request.getMedicineId(), request.getPharmacyId());
         if (emailExists) {
-            throw new DuplicateResourceException("Already subscribed to this medicine with this email address.");
+            throw new DuplicateResourceException("Already subscribed to this medicine at this pharmacy with this email address.");
         }
 
-        // 2. Check if phone already has an active subscription for this medicine
+        // 2. Check if phone already has an active subscription for this medicine at this pharmacy
         if (request.getUserPhone() != null && !request.getUserPhone().trim().isEmpty()) {
             boolean phoneExists = alertSubscriptionRepository
-                    .existsByUserPhoneAndMedicineIdAndIsActiveTrue(request.getUserPhone().trim(), request.getMedicineId());
+                    .existsByUserPhoneAndMedicineIdAndPharmacyIdAndIsActiveTrue(request.getUserPhone().trim(), request.getMedicineId(), request.getPharmacyId());
             if (phoneExists) {
-                throw new DuplicateResourceException("Already subscribed to this medicine with this phone number.");
+                throw new DuplicateResourceException("Already subscribed to this medicine at this pharmacy with this phone number.");
             }
         }
 
         Optional<AlertSubscription> existing = alertSubscriptionRepository
-                .findByUserEmailAndMedicineId(request.getUserEmail(), request.getMedicineId());
+                .findByUserEmailAndMedicineIdAndPharmacyId(request.getUserEmail(), request.getMedicineId(), request.getPharmacyId());
 
         if (existing.isEmpty() && request.getUserPhone() != null && !request.getUserPhone().trim().isEmpty()) {
             existing = alertSubscriptionRepository
-                    .findByUserPhoneAndMedicineId(request.getUserPhone().trim(), request.getMedicineId());
+                    .findByUserPhoneAndMedicineIdAndPharmacyId(request.getUserPhone().trim(), request.getMedicineId(), request.getPharmacyId());
         }
 
         if (existing.isPresent()) {
@@ -76,6 +76,7 @@ public class AlertService {
             reactivated.setIsActive(true);
             reactivated.setUserEmail(request.getUserEmail());
             reactivated.setUserPhone(request.getUserPhone());
+            reactivated.setPharmacyName(request.getPharmacyName());
             AlertSubscription saved = alertSubscriptionRepository.save(reactivated);
 
             // Send subscription confirmation email
@@ -86,8 +87,8 @@ public class AlertService {
                     .userEmail(saved.getUserEmail())
                     .medicineId(saved.getMedicineId())
                     .medicineName(saved.getMedicineName())
-                    .pharmacyId(0L)
-                    .message("Re-subscribed to stock alerts via Email/SMS.")
+                    .pharmacyId(saved.getPharmacyId() != null ? saved.getPharmacyId() : 0L)
+                    .message("Re-subscribed to stock alerts for this pharmacy.")
                     .build());
 
             return alertSubscriptionMapper.toResponse(saved);
@@ -105,8 +106,8 @@ public class AlertService {
                 .userEmail(saved.getUserEmail())
                 .medicineId(saved.getMedicineId())
                 .medicineName(saved.getMedicineName())
-                .pharmacyId(0L)
-                .message("Subscribed to stock alerts via Email/SMS.")
+                .pharmacyId(saved.getPharmacyId() != null ? saved.getPharmacyId() : 0L)
+                .message("Subscribed to stock alerts for this pharmacy.")
                 .build());
 
         return alertSubscriptionMapper.toResponse(saved);
@@ -136,12 +137,12 @@ public class AlertService {
                 .collect(Collectors.toList());
     }
 
-    public void unsubscribe(String userEmail,Long medicineId){
+    public void unsubscribe(String userEmail,Long medicineId,Long pharmacyId){
 
         AlertSubscription subscription = alertSubscriptionRepository
-                .findByUserEmailAndMedicineId(userEmail,medicineId)
+                .findByUserEmailAndMedicineIdAndPharmacyId(userEmail,medicineId,pharmacyId)
                 .orElseThrow(()->new ResourceNotFoundException(
-                        "Subscription not found for this medicine"
+                        "Subscription not found for this medicine at this pharmacy"
                     ));
 
         subscription.setIsActive(false);
@@ -155,8 +156,8 @@ public class AlertService {
                 .userEmail(subscription.getUserEmail())
                 .medicineId(subscription.getMedicineId())
                 .medicineName(subscription.getMedicineName())
-                .pharmacyId(0L)
-                .message("Unsubscribed from stock alerts.")
+                .pharmacyId(subscription.getPharmacyId() != null ? subscription.getPharmacyId() : 0L)
+                .message("Unsubscribed from stock alerts for " + (subscription.getPharmacyName() != null ? subscription.getPharmacyName() : "pharmacy") + ".")
                 .build());
     }
 
@@ -186,9 +187,9 @@ public class AlertService {
 
     public void handleRestocked(StockEvent event){
 
-        //find all users subscribe to medicine
+        //find all users subscribed to this medicine at this pharmacy
         List<AlertSubscription> subscription = alertSubscriptionRepository
-                .findByMedicineIdAndIsActiveTrue(event.getMedicineId());
+                .findByMedicineIdAndPharmacyIdAndIsActiveTrue(event.getMedicineId(), event.getPharmacyId());
 
         log.info("Medicine {} restocked - notifying {} subscribers"
                 ,event.getMedicineName(),subscription.size());

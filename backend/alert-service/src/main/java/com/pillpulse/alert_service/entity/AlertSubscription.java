@@ -32,6 +32,12 @@ public class AlertSubscription {
     @Column(name = "medicine_name",nullable = false)
     private String medicineName;
 
+    @Column(name = "pharmacy_id")
+    private Long pharmacyId;
+
+    @Column(name = "pharmacy_name")
+    private String pharmacyName;
+
     @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;

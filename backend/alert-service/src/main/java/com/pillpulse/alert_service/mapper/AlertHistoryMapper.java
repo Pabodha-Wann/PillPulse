@@ -18,6 +18,7 @@ public interface AlertHistoryMapper {
     @Mapping(target = "sentAt",ignore = true)
     @Mapping(target = "medicineId", source = "event.medicineId")
     @Mapping(target = "medicineName", source = "event.medicineName")
+    @Mapping(target = "pharmacyId", source = "event.pharmacyId")
     AlertHistory toEntity(AlertSubscription sub, StockEvent event,String message);
 
 

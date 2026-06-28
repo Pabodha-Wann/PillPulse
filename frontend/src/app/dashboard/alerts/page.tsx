@@ -86,15 +86,15 @@ export default function AdminAlertsPage() {
         }
     }
 
-    const handleUnsubscribe = async (subEmail: string, medicineId: number, medicineName: string) => {
+    const handleUnsubscribe = async (subEmail: string, medicineId: number, medicineName: string, pharmacyId: number) => {
         if (!window.confirm(`Are you sure you want to stop alerts for ${medicineName} on behalf of ${subEmail}?`)) {
             return
         }
 
         try {
-            await alertService.unsubscribe(subEmail, medicineId)
+            await alertService.unsubscribe(subEmail, medicineId, pharmacyId)
             toast.success(`Successfully removed subscription for ${medicineName}!`)
-            setSubscriptions(prev => prev.filter(sub => sub.medicineId !== medicineId))
+            setSubscriptions(prev => prev.filter(sub => !(sub.medicineId === medicineId && sub.pharmacyId === pharmacyId)))
             fetchAllSubscriptions()
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Failed to unsubscribe')
@@ -177,7 +177,7 @@ export default function AdminAlertsPage() {
                                         </div>
 
                                          <button
-                                             onClick={() => handleUnsubscribe(sub.userEmail, sub.medicineId, sub.medicineName)}
+                                             onClick={() => handleUnsubscribe(sub.userEmail, sub.medicineId, sub.medicineName, sub.pharmacyId || 0)}
                                              className="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all"
                                          >
                                              Delete Alert
@@ -290,7 +290,8 @@ export default function AdminAlertsPage() {
                                          </td>
                                          <td className="py-4 px-6">
                                              <div className="font-extrabold text-slate-900">{sub.medicineName}</div>
-                                             <div className="text-slate-400 text-xs font-medium">ID: {sub.medicineId}</div>
+                                             <div className="text-[#173822] font-extrabold text-xs">{sub.pharmacyName || 'Global Watch'}</div>
+                                             <div className="text-slate-400 text-[10px] font-medium mt-0.5">Med ID: {sub.medicineId} | Pharm ID: {sub.pharmacyId || 'N/A'}</div>
                                          </td>
                                          <td className="py-4 px-6 text-slate-500 text-xs">
                                              {sub.createdAt ? new Date(sub.createdAt).toLocaleDateString() : 'N/A'}
@@ -311,7 +312,7 @@ export default function AdminAlertsPage() {
                                          <td className="py-4 px-6 text-right">
                                              {sub.isActive && (
                                                  <button
-                                                     onClick={() => handleUnsubscribe(sub.userEmail, sub.medicineId, sub.medicineName)}
+                                                     onClick={() => handleUnsubscribe(sub.userEmail, sub.medicineId, sub.medicineName, sub.pharmacyId || 0)}
                                                      className="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all"
                                                  >
                                                      Delete Alert

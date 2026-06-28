@@ -18,6 +18,8 @@ public class AlertSubscriptionResponse {
     private String userPhone;
     private Long medicineId;
     private String medicineName;
+    private Long pharmacyId;
+    private String pharmacyName;
     private Boolean isActive;
     private LocalDateTime createdAt;
 }

@@ -32,6 +32,8 @@ export default function SearchPage() {
     const [subModalOpen, setSubModalOpen] = useState(false)
     const [selectedMedId, setSelectedMedId] = useState<number | null>(null)
     const [selectedMedName, setSelectedMedName] = useState('')
+    const [selectedPharmacyIdForSub, setSelectedPharmacyIdForSub] = useState<number | null>(null)
+    const [selectedPharmacyNameForSub, setSelectedPharmacyNameForSub] = useState('')
     const [subEmail, setSubEmail] = useState('')
     const [subPhone, setSubPhone] = useState('')
     const [submittingSub, setSubmittingSub] = useState(false)
@@ -116,9 +118,9 @@ export default function SearchPage() {
 
     const handleSubscribe = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!selectedMedId) {
-            toast.error('Technical Error: Medicine ID is missing for subscription!')
-            console.error('Subscription Error: selectedMedId is null. Selected name:', selectedMedName)
+        if (!selectedMedId || !selectedPharmacyIdForSub) {
+            toast.error('Technical Error: Medicine ID or Pharmacy ID is missing for subscription!')
+            console.error('Subscription Error: selectedMedId or selectedPharmacyIdForSub is null. Selected name:', selectedMedName)
             return
         }
         if (!subEmail.trim()) {
@@ -131,9 +133,11 @@ export default function SearchPage() {
             await alertService.subscribe({
                 userEmail: subEmail.trim(),
                 userPhone: subPhone.trim() || undefined,
-                medicineId: selectedMedId
+                medicineId: selectedMedId,
+                pharmacyId: selectedPharmacyIdForSub,
+                pharmacyName: selectedPharmacyNameForSub
             })
-            toast.success(`Subscribed successfully for ${selectedMedName} stock alerts!`)
+            toast.success(`Subscribed successfully for ${selectedMedName} stock alerts at ${selectedPharmacyNameForSub}!`)
             setSubModalOpen(false)
             setSubEmail('')
             setSubPhone('')
@@ -319,6 +323,8 @@ export default function SearchPage() {
                                             e.stopPropagation()
                                             setSelectedMedId(pharmacy.medicineId)
                                             setSelectedMedName(pharmacy.medicineName)
+                                            setSelectedPharmacyIdForSub(pharmacy.pharmacyId)
+                                            setSelectedPharmacyNameForSub(pharmacy.pharmacyName)
                                             setSubModalOpen(true)
                                         }}
                                         className="mt-4 w-full bg-[#e8f3d6] hover:bg-[#d4e6b5] text-[#173822] py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
@@ -383,15 +389,29 @@ export default function SearchPage() {
                                 </button>
                             </div>
 
-                            <div className="bg-[#e8f3d6] px-4 py-3 rounded-2xl mb-6 flex items-center gap-3">
-                                <span className="p-2 bg-[#173822] rounded-lg text-white">
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                    </svg>
-                                </span>
-                                <div>
-                                    <span className="text-[10px] font-bold text-[#173822]/80 uppercase tracking-wider block">Selected Medicine</span>
-                                    <span className="font-extrabold text-[#173822] text-sm">{selectedMedName}</span>
+                            <div className="bg-[#e8f3d6] px-4 py-3 rounded-2xl mb-6 flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="p-2 bg-[#173822] rounded-lg text-white">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <span className="text-[10px] font-bold text-[#173822]/80 uppercase tracking-wider block">Selected Medicine</span>
+                                        <span className="font-extrabold text-[#173822] text-sm">{selectedMedName}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 border-t border-[#173822]/10 pt-2.5">
+                                    <span className="p-2 bg-[#173822] rounded-lg text-white">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <span className="text-[10px] font-bold text-[#173822]/80 uppercase tracking-wider block">Target Pharmacy</span>
+                                        <span className="font-extrabold text-[#173822] text-sm">{selectedPharmacyNameForSub}</span>
+                                    </div>
                                 </div>
                             </div>
 

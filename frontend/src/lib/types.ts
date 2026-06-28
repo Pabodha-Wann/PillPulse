@@ -49,6 +49,8 @@ export interface AlertSubscription {
     userPhone?: string
     medicineId: number
     medicineName: string
+    pharmacyId?: number
+    pharmacyName?: string
     isActive: boolean
     createdAt: string
 }

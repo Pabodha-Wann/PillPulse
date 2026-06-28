@@ -7,6 +7,8 @@ export const alertService = {
         userEmail: string;
         userPhone?: string;
         medicineId: number;
+        pharmacyId: number;
+        pharmacyName: string;
     }): Promise<AlertSubscription> => {
         const response = await axiosInstance.post('/api/alerts/subscribe', data);
         return response.data;
@@ -25,8 +27,8 @@ export const alertService = {
     },
 
     // Unsubscribe from alerts for a medicine
-    unsubscribe: async (email: string, medicineId: number): Promise<void> => {
-        await axiosInstance.delete(`/api/alerts/unsubscribe/${email}/medicine/${medicineId}`);
+    unsubscribe: async (email: string, medicineId: number, pharmacyId: number): Promise<void> => {
+        await axiosInstance.delete(`/api/alerts/unsubscribe/${email}/medicine/${medicineId}/pharmacy/${pharmacyId}`);
     },
 
     // Get alert notification history for a user email
