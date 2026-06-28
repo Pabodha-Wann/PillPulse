@@ -1,5 +1,6 @@
 package com.pillpulse.alert_service.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
@@ -13,10 +14,14 @@ public class EmailNotificationService {
 
     private final JavaMailSender mailSender;
 
+    @Value("${spring.mail.username:pillpulse@gmail.com}")
+    private String fromEmail;
+
     public void sendSubscriptionConfirmationEmail(String toEmail, String medicineName, String pharmacyName) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(toEmail);
+            message.setFrom(fromEmail);
             message.setSubject("💊 PillPulse Alert Activated: " + medicineName + " at " + (pharmacyName != null ? pharmacyName : "selected pharmacy"));
             
             String text = String.format(
@@ -39,6 +44,7 @@ public class EmailNotificationService {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(toEmail);
+            message.setFrom(fromEmail);
             message.setSubject("🔔 PillPulse Stock Alert: " + medicineName + " Restocked!");
             
             String text = String.format(
@@ -61,6 +67,7 @@ public class EmailNotificationService {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(toEmail);
+            message.setFrom(fromEmail);
             message.setSubject("🔕 PillPulse Alert Deactivated: " + medicineName);
             
             String text = String.format(
