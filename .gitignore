@@ -1,2 +1,16 @@
 .idea
 .vscode
+k8s/config/secrets.yaml
+
+# Build files
+target/
+build/
+.next/
+dist/
+node_modules/
+out/
+*.jar
+*.war
+
+deploy.ps1
+build-all.ps1

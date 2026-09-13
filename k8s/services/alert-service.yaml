@@ -1,0 +1,122 @@
+# ─────────────────────────────────────────────────────────
+# 🎓 K8s Learning: Alert Service
+#
+# Sends SMS (Twilio) and Email (SMTP) notifications when
+# out-of-stock medicines are restocked. Listens to
+# RabbitMQ events from pharmacy/medicine services.
+# Depends on: postgres-alert, rabbitmq, eureka-server
+# ─────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-service
+  labels:
+    app: alert-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alert-service
+  template:
+    metadata:
+      labels:
+        app: alert-service
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ['sh', '-c',
+            'until nc -z postgres-alert 5432; do echo "⏳ Waiting for PostgreSQL..."; sleep 2; done; echo "✅ PostgreSQL is ready!"']
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command: ['sh', '-c',
+            'until nc -z rabbitmq 5672; do echo "⏳ Waiting for RabbitMQ..."; sleep 2; done; echo "✅ RabbitMQ is ready!"']
+        - name: wait-for-eureka
+          image: busybox:1.36
+          command: ['sh', '-c',
+            'until wget -q --spider http://eureka-server:8761/actuator/health 2>/dev/null; do echo "⏳ Waiting for Eureka..."; sleep 3; done; echo "✅ Eureka is ready!"']
+      containers:
+        - name: alert-service
+          image: alert-service:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: DB_PASSWORD
+            - name: SPRING_MAIL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: SPRING_MAIL_HOST
+            - name: SPRING_MAIL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: SPRING_MAIL_PORT
+            - name: SPRING_MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: SPRING_MAIL_USERNAME
+            - name: SPRING_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: SPRING_MAIL_PASSWORD
+            - name: TWILIO_ACCOUNT_SID
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: TWILIO_ACCOUNT_SID
+            - name: TWILIO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: TWILIO_AUTH_TOKEN
+            - name: TWILIO_PHONE_NUMBER
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: TWILIO_PHONE_NUMBER
+          ports:
+            - containerPort: 8084
+              name: http
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alert-service
+spec:
+  ports:
+    - port: 8084
+      targetPort: 8084
+      name: http
+  selector:
+    app: alert-service

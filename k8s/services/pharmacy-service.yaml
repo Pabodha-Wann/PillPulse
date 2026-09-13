@@ -1,0 +1,93 @@
+# ─────────────────────────────────────────────────────────
+# 🎓 K8s Learning: Pharmacy Service
+#
+# Manages pharmacy profiles, GPS coordinates, and inventory.
+# Depends on: postgres-pharmacy, rabbitmq, eureka-server
+#
+# Init Containers ensure all dependencies are ready
+# before the JVM starts (prevents crash-loops).
+# ─────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pharmacy-service
+  labels:
+    app: pharmacy-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pharmacy-service
+  template:
+    metadata:
+      labels:
+        app: pharmacy-service
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ['sh', '-c',
+            'until nc -z postgres-pharmacy 5432; do echo "⏳ Waiting for PostgreSQL..."; sleep 2; done; echo "✅ PostgreSQL is ready!"']
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command: ['sh', '-c',
+            'until nc -z rabbitmq 5672; do echo "⏳ Waiting for RabbitMQ..."; sleep 2; done; echo "✅ RabbitMQ is ready!"']
+        - name: wait-for-eureka
+          image: busybox:1.36
+          command: ['sh', '-c',
+            'until wget -q --spider http://eureka-server:8761/actuator/health 2>/dev/null; do echo "⏳ Waiting for Eureka..."; sleep 3; done; echo "✅ Eureka is ready!"']
+      containers:
+        - name: pharmacy-service
+          image: pharmacy-service:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: DB_PASSWORD
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: KEYCLOAK_CLIENT_SECRET
+          ports:
+            - containerPort: 8081
+              name: http
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pharmacy-service
+spec:
+  ports:
+    - port: 8081
+      targetPort: 8081
+      name: http
+  selector:
+    app: pharmacy-service

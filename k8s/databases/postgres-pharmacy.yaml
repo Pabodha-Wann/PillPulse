@@ -1,0 +1,93 @@
+# ─────────────────────────────────────────────────────────
+# 🎓 K8s Learning: PostgreSQL for pharmacy-service
+#
+# Contains 3 objects:
+# 1. PersistentVolumeClaim — reserves 1GB disk so data
+#    survives pod restarts (like Docker volumes)
+# 2. Deployment — runs the postgres:15-alpine container
+# 3. Service — gives it the DNS name "postgres-pharmacy"
+#    so pharmacy-service can connect via:
+#    jdbc:postgresql://postgres-pharmacy:5432/pharmacy_db
+# ─────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pharmacy-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-pharmacy
+  labels:
+    app: postgres-pharmacy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-pharmacy
+  template:
+    metadata:
+      labels:
+        app: postgres-pharmacy
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_DB
+              value: "pharmacy_db"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pillpulse-secrets
+                  key: DB_PASSWORD
+          ports:
+            - containerPort: 5432
+              name: postgres
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+          volumeMounts:
+            - name: postgres-pharmacy-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-pharmacy-storage
+          persistentVolumeClaim:
+            claimName: postgres-pharmacy-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-pharmacy
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres-pharmacy
